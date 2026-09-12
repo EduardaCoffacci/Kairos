@@ -100,17 +100,25 @@ export default function Hero() {
           </div>
 
           {/* Atendente */}
-          <div className="relative h-[58px] w-[58px] animate-float overflow-hidden rounded-full border-4 border-white bg-[#e04f11] shadow-xl sm:h-[65px] sm:w-[65px] lg:h-[75px] lg:w-[75px]">
-            <Image
-              src="/atendente.jpg"
-              alt="Atendimento"
-              fill
-              className="object-cover"
-            />
+          <a
+            href="https://wa.me/5547992187965"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative flex h-[58px] w-[58px] animate-float items-center justify-center sm:h-[65px] sm:w-[65px] lg:h-[75px] lg:w-[75px]"
+          >
+            {/* Atendente */}
+            <div className="relative h-full w-full sombra-abrindo  overflow-hidden rounded-full border-4 border-white bg-[#e04f11] ">
+              <Image
+                src="/atendente.jpg"
+                alt="Atendimento pelo WhatsApp"
+                fill
+                className="object-cover"
+              />
+            </div>
+          </a>
 
-            {/* Status */}
-          </div>
-          <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-green-500 sm:h-4 sm:w-4" />
+          {/* Status */}
+          <span className="absolute bottom-2  right-2 h-3 w-3 rounded-full border-2 border-white bg-green-500 sm:h-4 sm:w-4" />
         </div>
       </div>
     </section>

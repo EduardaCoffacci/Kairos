@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import Hero from "@/componentes/Hero/Hero";
 import Header from "../componentes/Header/Header";
 import ImportanciaSecagem from "@/componentes/ImportanciaSecagem/ImportanciaSecagem";
+import DesafiosSecagem from "@/componentes/DesafiosSecagem/DesafiosSecagem";
 
 export default function Home() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -37,7 +38,7 @@ export default function Home() {
           muted
           loop
           playsInline
-          className=" w-full object-cover"
+          className=" w-full object-cover object-[50%_65%]"
         >
           <source
             src="/17923125-hd_1920_1080_60fps.mp4"
@@ -53,6 +54,7 @@ export default function Home() {
         <Header />
         <Hero />
         <ImportanciaSecagem/>
+        <DesafiosSecagem/>
       </div>
     </main>
   );

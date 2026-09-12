@@ -2,7 +2,7 @@ import React from "react";
 
 export default function ImportanciaSecagem() {
   return (
-    <section className="relative overflow-hidden bg-[#f8f9fa] px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+    <section id="importancia" className="relative overflow-hidden bg-[#f8f9fa] px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
       
       {/* Conteúdo */}
       <div className="relative z-10 mx-auto max-w-[1200px]">
@@ -39,7 +39,7 @@ export default function ImportanciaSecagem() {
         </div>
 
         {/* Subtítulo */}
-        <h3 className="mt-8 text-center text-[22px] font-bold leading-snug text-[#8b1e2d] sm:text-[27px] md:text-[30px]">
+        <h3 className="mt-8 text-center text-[22px] font-bold leading-snug text-[#e04f11] sm:text-[27px] md:text-[30px]">
           Uma etapa decisiva para a qualidade e valorização da produção
         </h3>
 
@@ -52,7 +52,7 @@ export default function ImportanciaSecagem() {
             pós-colheita. É ela que garante que todo o esforço do campo se
             traduza em{" "}
             
-            <span className="rounded bg-[#f1e8e9] px-1 font-bold text-[#8b1e2d]">
+            <span className="rounded bg-[#f1e8e9] px-1 font-bold text-[#e04f11]">
               qualidade, rentabilidade e segurança alimentar
             </span>
             .
