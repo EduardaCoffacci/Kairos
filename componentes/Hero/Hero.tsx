@@ -3,9 +3,9 @@ import Image from "next/image";
 
 export default function Hero() {
   return (
-    <section className="relative min-h-[calc(100vh-80px)] text-white">
+    <section className="relative min-h-screen pt-[80px] text-white">
       {/* Conteúdo da Hero */}
-      <div className="relative z-10 flex min-h-[calc(100vh-80px)] flex-col items-center px-4 pt-24 sm:px-6 sm:pt-28 lg:pt-32 xl:pt-36">
+      <div className="relative z-10 flex min-h-[calc(100vh-80px)] flex-col items-center px-4 pt-20 sm:px-6 lg:pt-24 xl:pt-28">
         {/* Título */}
 
         <h1 className="text-center text-[20px] font-bold leading-[1.05] sm:text-[24px] md:text-[28px] lg:text-[36px] xl:text-[42px]">
