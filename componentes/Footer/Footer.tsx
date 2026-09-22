@@ -98,7 +98,7 @@ export default function Footer() {
                 href="/produtos/caldeiras"
                 className="text-white/80 transition hover:text-white"
               >
-                Caldeiras de Biomassa
+                Fornalhas de Biomassa
               </Link>
 
               <Link
@@ -143,7 +143,7 @@ export default function Footer() {
                 <p className="text-sm leading-6 text-white/80 sm:text-base">
                   {/*Rua , Numero - Bairro,*/}
                   <br />
-                  Balneário Camboriú - SC
+                  Navegantes - SC
                 </p>
               </div>
 
@@ -161,11 +161,8 @@ export default function Footer() {
                 <FaEnvelope className="mt-1 shrink-0" size={24} />
 
                 <div className="flex flex-col gap-2 text-sm text-white/80 sm:text-base">
-                  <span>contato@queimadores.ind.br</span>
+                  <span>comercial@kairosindustrial.com.br</span>
 
-                  <strong className="text-sm text-white">
-                    Assistência: montagem@queimadores.ind.br
-                  </strong>
                 </div>
               </div>
             </div>

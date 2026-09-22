@@ -21,7 +21,7 @@ export default function Hero() {
 
         {/* Descrição */}
         <p className="mx-auto mt-4 max-w-[700px] px-2 text-center text-[10px] leading-relaxed text-white sm:mt-5 sm:text-[12px] md:text-[14px] lg:mt-6 lg:text-[16px]">
-          Há mais de 17 anos, a Kairos Termo Engenharia é referência na produção
+          Há mais de 15 anos, a Kairos Industria é referência na produção
           de queimadores de cavaco para secagem de grãos.
         </p>
 
