@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 const Header = () => {
@@ -46,8 +47,8 @@ const Header = () => {
 
         {/* Menu Desktop */}
         <nav className="hidden flex-1 items-center justify-center gap-5 text-[14px] font-semibold lg:flex xl:gap-9 xl:text-[18px]">
-          <a
-            href="#"
+          <Link
+            href="/"
             className={`relative transition-colors duration-500 ${
               isScrolled ? "text-black" : "text-white"
             } after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:w-0 after:transition-all after:duration-700 hover:after:w-full ${
@@ -55,9 +56,9 @@ const Header = () => {
             }`}
           >
             Home
-          </a>
+          </Link>
 
-          <a
+          <Link
             href="/fornalhas"
             className={`relative transition-colors duration-500 ${
               isScrolled ? "text-black" : "text-white"
@@ -66,10 +67,10 @@ const Header = () => {
             }`}
           >
             Fornalhas
-          </a>
+          </Link>
 
-          <a
-            href="#"
+          <Link
+            href="/clientes"
             className={`relative transition-colors duration-500 ${
               isScrolled ? "text-black" : "text-white"
             } after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:w-0 after:transition-all after:duration-700 hover:after:w-full ${
@@ -77,10 +78,10 @@ const Header = () => {
             }`}
           >
             Clientes
-          </a>
+          </Link>
 
-          <a
-            href="#"
+          <Link
+            href="/nossahistoria"
             className={`relative transition-colors duration-500 ${
               isScrolled ? "text-black" : "text-white"
             } after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:w-0 after:transition-all after:duration-700 hover:after:w-full ${
@@ -88,10 +89,10 @@ const Header = () => {
             }`}
           >
             Nossa História
-          </a>
+          </Link>
 
-          <a
-            href="#"
+          <Link
+            href="/contato"
             className={`relative transition-colors duration-500 ${
               isScrolled ? "text-black" : "text-white"
             } after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:w-0 after:transition-all after:duration-700 hover:after:w-full ${
@@ -99,7 +100,7 @@ const Header = () => {
             }`}
           >
             Contato
-          </a>
+          </Link>
         </nav>
 
         {/* Botão Desktop */}
@@ -155,17 +156,17 @@ const Header = () => {
             isScrolled ? "text-black" : "text-white"
           }`}
         >
-          <a href="#">Home</a>
+          <Link href="/">Home</Link>
 
-          <a href="#">Queimadores</a>
+          <Link href="#">Queimadores</Link>
 
-          <a href="#">Caldeira</a>
+          <Link href="#">Caldeira</Link>
 
-          <a href="#">Clientes</a>
+          <Link href="#">Clientes</Link>
 
-          <a href="#">Nossa História</a>
+          <Link href="#">Nossa História</Link>
 
-          <a href="#">Contato</a>
+          <Link href="#">Contato</Link>
 
           <a
             href="#"

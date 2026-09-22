@@ -5,6 +5,8 @@ import Hero from "@/componentes/Hero/Hero";
 import Header from "../componentes/Header/Header";
 import ImportanciaSecagem from "@/componentes/ImportanciaSecagem/ImportanciaSecagem";
 import DesafiosSecagem from "@/componentes/DesafiosSecagem/DesafiosSecagem";
+import QueimadoresCavacos from "@/componentes/QueimadoresCavacos/QueimadoresCavacos";
+import Footer from "@/componentes/Footer/Footer";
 
 export default function Home() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -55,6 +57,8 @@ export default function Home() {
         <Hero />
         <ImportanciaSecagem/>
         <DesafiosSecagem/>
+        <QueimadoresCavacos/>
+        <Footer/>
       </div>
     </main>
   );

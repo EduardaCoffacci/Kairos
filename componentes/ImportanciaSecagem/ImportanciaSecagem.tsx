@@ -33,9 +33,9 @@ export default function ImportanciaSecagem() {
 
         {/* Linha decorativa */}
         <div className="mt-7 flex items-center justify-center gap-2">
-          <span className="h-[4px] w-12 rounded-full bg-[#8b1e2d]"></span>
+          <span className="h-[4px] w-12 rounded-full bg-[#e04f11]"></span>
           <span className="h-[4px] w-16 rounded-full bg-[#398263]"></span>
-          <span className="h-[4px] w-12 rounded-full bg-[#8b1e2d]"></span>
+          <span className="h-[4px] w-12 rounded-full bg-[#e04f11]"></span>
         </div>
 
         {/* Subtítulo */}
@@ -59,7 +59,7 @@ export default function ImportanciaSecagem() {
           </p>
 
           {/* Linha interna */}
-          <div className="mt-7 h-[4px] w-16 rounded-full bg-gradient-to-r from-[#8b1e2d] to-[#398263]"></div>
+          <div className="mt-7 h-[4px] w-16 rounded-full bg-gradient-to-r from-[##e04f11] to-[#398263]"></div>
 
           {/* Segundo texto */}
           <p className="mt-7 text-[17px] leading-relaxed text-[#687d9a] sm:text-[19px] md:text-[21px]">
