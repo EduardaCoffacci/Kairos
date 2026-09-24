@@ -141,7 +141,7 @@ export default function Footer() {
                 <FaMapMarkerAlt className="mt-1 shrink-0" size={24} />
 
                 <p className="text-sm leading-6 text-white/80 sm:text-base">
-                  {/*Rua , Numero - Bairro,*/}
+                  {/*Rua , N° - Bairro,*/}
                   <br />
                   Navegantes - SC
                 </p>
@@ -162,7 +162,6 @@ export default function Footer() {
 
                 <div className="flex flex-col gap-2 text-sm text-white/80 sm:text-base">
                   <span>comercial@kairosindustrial.com.br</span>
-
                 </div>
               </div>
             </div>

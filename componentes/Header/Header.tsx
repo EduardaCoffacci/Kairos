@@ -4,7 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-const Header = () => {
+interface HeaderProps {
+  darkText?: boolean;
+}
+
+const Header = ({ darkText = false }: HeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -50,9 +54,9 @@ const Header = () => {
           <Link
             href="/"
             className={`relative transition-colors duration-500 ${
-              isScrolled ? "text-black" : "text-white"
+              darkText || isScrolled ? "text-black" : "text-white"
             } after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:w-0 after:transition-all after:duration-700 hover:after:w-full ${
-              isScrolled ? "after:bg-black" : "after:bg-[#f7f3f4]"
+              darkText || isScrolled ? "after:bg-black" : "after:bg-[#f7f3f4]"
             }`}
           >
             Home
@@ -61,7 +65,7 @@ const Header = () => {
           <Link
             href="/fornalhas"
             className={`relative transition-colors duration-500 ${
-              isScrolled ? "text-black" : "text-white"
+              darkText || isScrolled ? "text-black" : "text-white"
             } after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:w-0 after:transition-all after:duration-700 hover:after:w-full ${
               isScrolled ? "after:bg-black" : "after:bg-[#f7f3f4]"
             }`}
@@ -72,7 +76,7 @@ const Header = () => {
           <Link
             href="/clientes"
             className={`relative transition-colors duration-500 ${
-              isScrolled ? "text-black" : "text-white"
+              darkText || isScrolled ? "text-black" : "text-white"
             } after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:w-0 after:transition-all after:duration-700 hover:after:w-full ${
               isScrolled ? "after:bg-black" : "after:bg-[#f7f3f4]"
             }`}
@@ -83,7 +87,7 @@ const Header = () => {
           <Link
             href="/nossahistoria"
             className={`relative transition-colors duration-500 ${
-              isScrolled ? "text-black" : "text-white"
+              darkText || isScrolled ? "text-black" : "text-white"
             } after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:w-0 after:transition-all after:duration-700 hover:after:w-full ${
               isScrolled ? "after:bg-black" : "after:bg-[#f7f3f4]"
             }`}
@@ -94,7 +98,7 @@ const Header = () => {
           <Link
             href="/contato"
             className={`relative transition-colors duration-500 ${
-              isScrolled ? "text-black" : "text-white"
+              darkText || isScrolled ? "text-black" : "text-white"
             } after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:w-0 after:transition-all after:duration-700 hover:after:w-full ${
               isScrolled ? "after:bg-black" : "after:bg-[#f7f3f4]"
             }`}
@@ -109,7 +113,7 @@ const Header = () => {
             href="#"
             className="rounded-lg bg-[#e04f11] px-4 py-2 text-[14px] font-bold lg:px-4 lg:py-3 xl:px-5 xl:text-[16px]"
           >
-            Assistência Técnica
+            Solicitar Orçamento
           </a>
         </div>
 
@@ -121,19 +125,19 @@ const Header = () => {
         >
           <span
             className={`h-[3px] w-7 rounded transition-colors duration-500 ${
-              isScrolled ? "bg-black" : "bg-white"
+              darkText || isScrolled ? "bg-black" : "bg-white"
             }`}
           ></span>
 
           <span
             className={`h-[3px] w-7 rounded transition-colors duration-500 ${
-              isScrolled ? "bg-black" : "bg-white"
+              darkText || isScrolled ? "bg-black" : "bg-white"
             }`}
           ></span>
 
           <span
             className={`h-[3px] w-7 rounded transition-colors duration-500 ${
-              isScrolled ? "bg-black" : "bg-white"
+              darkText || isScrolled ? "bg-black" : "bg-white"
             }`}
           ></span>
         </button>
@@ -158,19 +162,17 @@ const Header = () => {
         >
           <Link href="/">Home</Link>
 
-          <Link href="#">Queimadores</Link>
+          <Link href="/fornalhas">Fornalhas</Link>
 
-          <Link href="#">Caldeira</Link>
+          <Link href="/clientes">Clientes</Link>
 
-          <Link href="#">Clientes</Link>
+          <Link href="/nossahistoria">Nossa História</Link>
 
-          <Link href="#">Nossa História</Link>
-
-          <Link href="#">Contato</Link>
+          <Link href="/contato">Contato</Link>
 
           <a
             href="#"
-            className="rounded-lg bg-[#e04f11] px-6 py-3 font-bold text-white"
+            className="rounded-lg bg-[ #e04f11] px-6 py-3 font-bold text-white"
           >
             Assistência Técnica
           </a>
