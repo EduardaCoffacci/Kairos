@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Kairos Indústria",
-  description: "",
+  description: "Soluções em engenharia térmica e aproveitamento de biomassa para geração de energia",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

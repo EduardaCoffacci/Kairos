@@ -30,6 +30,31 @@ const equipamentos = [
 
 function Contato() {
   const [assunto, setAssunto] = useState("");
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [empresa, setEmpresa] = useState("");
+  const [mensagem, setMensagem] = useState("");
+
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const dados = {
+      nome,
+      email,
+      telefone,
+      empresa,
+      assunto,
+      mensagem,
+    };
+    console.log(dados);
+    const resposta = await fetch("https://kairos-api-kca6.onrender.com/contact", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(dados),
+    });
+  };
 
   return (
     <>
@@ -47,7 +72,7 @@ function Contato() {
                 </h2>
               </div>
 
-              <form className="space-y-5">
+              <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Nome + Email */}
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   <div>
@@ -57,6 +82,8 @@ function Contato() {
 
                     <input
                       type="text"
+                      value={nome}
+                      onChange={(e) => setNome(e.target.value)}
                       placeholder="Seu nome"
                       className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[#e04f11] focus:ring-1 focus:ring-[#e04f11]"
                     />
@@ -68,6 +95,8 @@ function Contato() {
                     </label>
 
                     <input
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       type="email"
                       placeholder="seu@email.com"
                       className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[#e04f11] focus:ring-1 focus:ring-[#e04f11]"
@@ -83,6 +112,8 @@ function Contato() {
                     </label>
 
                     <input
+                      value={telefone}
+                      onChange={(e) => setTelefone(e.target.value)}
                       type="tel"
                       placeholder="(00) 00000-0000"
                       className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[#e04f11] focus:ring-1 focus:ring-[#e04f11]"
@@ -95,6 +126,8 @@ function Contato() {
                     </label>
 
                     <input
+                      value={empresa}
+                      onChange={(e) => setEmpresa(e.target.value)}
                       type="text"
                       placeholder="Nome da empresa"
                       className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[#e04f11] focus:ring-1 focus:ring-[#e04f11]"
@@ -134,6 +167,8 @@ function Contato() {
                   </label>
 
                   <textarea
+                    value={mensagem}
+                    onChange={(e) => setMensagem(e.target.value)}
                     rows={6}
                     placeholder="Descreva sua necessidade e como podemos ajudar..."
                     className="w-full resize-none rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[#e04f11] focus:ring-1 focus:ring-[#e04f11]"
