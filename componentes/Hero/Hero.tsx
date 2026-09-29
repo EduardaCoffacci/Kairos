@@ -14,7 +14,7 @@ export default function Hero() {
           EM ENERGIA LIMPA
           <br />
           DE FORMA{" "}
-          <span className="inline-block rounded-lg bg-white px-2 py-0 text-[#398263] shadow-lg sm:px-3 sm:py-0">
+          <span className="inline-block rounded-lg bg-white px-2 py-0 text-[#a7a4a4] shadow-lg sm:px-3 sm:py-0">
             SUSTENTÁVEL
           </span>
         </h1>

@@ -12,7 +12,7 @@ import {
 
 export default function Footer() {
   return (
-    <footer className="relative bg-[#e04f11] text-white">
+    <footer className="relative bg-[#000000] text-white">
       <div className="mx-auto max-w-[1800px] px-6 py-12 sm:px-10 lg:px-16">
         {/* COLUNAS PRINCIPAIS */}
         <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-4 lg:gap-12">
@@ -31,7 +31,7 @@ export default function Footer() {
               <a
                 href="#"
                 aria-label="Facebook"
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-[#e04f11] transition hover:bg-white hover:text-[#7f1724]"
+                className="flex h-11 w-11 items-center justify-center rounded-full  transition hover:bg-white hover:text-[#7f1724]"
               >
                 <FaFacebook size={21} />
               </a>
@@ -39,7 +39,7 @@ export default function Footer() {
               <a
                 href="#"
                 aria-label="Instagram"
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-[#e04f11] transition hover:bg-white hover:text-[#7f1724]"
+                className="flex h-11 w-11 items-center justify-center rounded-full  transition hover:bg-white hover:text-[#7f1724]"
               >
                 <FaInstagram size={21} />
               </a>
@@ -47,7 +47,7 @@ export default function Footer() {
               <a
                 href="#"
                 aria-label="LinkedIn"
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-[#e04f11] transition hover:bg-white hover:text-[#7f1724]"
+                className="flex h-11 w-11 items-center justify-center rounded-full  transition hover:bg-white hover:text-[#7f1724]"
               >
                 <FaLinkedin size={21} />
               </a>

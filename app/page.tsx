@@ -41,7 +41,7 @@ export default function Home() {
           muted
           loop
           playsInline
-          className=" w-full object-cover object-[50%_65%]"
+          className=" w-full object-cover object-[50%_65%] hue-rotate-180"
         >
           <source
             src="/17923125-hd_1920_1080_60fps.mp4"

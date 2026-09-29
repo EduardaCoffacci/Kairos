@@ -64,7 +64,7 @@ export default function DesafiosSecagem() {
                 className="group relative flex min-h-[170px] items-center overflow-hidden rounded-xl bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
               >
                 {/* Barra lateral */}
-                <div className="absolute left-0 top-0 h-full w-2 bg-gradient-to-b from-orange-500 to-red-400" />
+                <div className="absolute left-0 top-0 h-full w-2 bg-zinc-900" />
 
                 <div className="flex w-full items-center gap-6 px-8 py-8 sm:px-10">
                   {/* Ícone */}
