@@ -35,25 +35,56 @@ function Contato() {
   const [telefone, setTelefone] = useState("");
   const [empresa, setEmpresa] = useState("");
   const [mensagem, setMensagem] = useState("");
+  const [mensagemSucesso, setMensagemSucesso] = useState("");
+  const [enviando, setEnviando] = useState(false);
 
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    setMensagemSucesso("");
+    setEnviando(true);
+
     const dados = {
       nome,
-      email,
+      email,  
       telefone,
       empresa,
       assunto,
       mensagem,
     };
+
     console.log(dados);
-    const resposta = await fetch("https://kairos-api-kca6.onrender.com/contact", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(dados),
-    });
+
+    try {
+      const resposta = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/contact`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(dados),
+        },
+      );
+
+      if (!resposta.ok) {
+        throw new Error("Erro ao enviar formulário");
+      }
+
+      setNome("");
+      setEmail("");
+      setTelefone("");
+      setEmpresa("");
+      setAssunto("");
+      setMensagem("");
+
+      setMensagemSucesso("Mensagem enviada com sucesso!");
+      console.log("MENSAGEM DE SUCESSO ATIVADA");
+    } catch (error) {
+      console.error("Erro ao enviar formulário:", error);
+    } finally {
+      setEnviando(false);
+    }
   };
 
   return (
@@ -84,8 +115,8 @@ function Contato() {
                       type="text"
                       value={nome}
                       onChange={(e) => setNome(e.target.value)}
-                      placeholder="Seu nome"
-                      className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[#e04f11] focus:ring-1 focus:ring-[#e04f11]"
+                      placeholder="Digite seu nome "
+                      className="w-full rounded-md border text-slate-900 border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[#e04f11] focus:ring-1 focus:ring-[#e04f11]"
                     />
                   </div>
 
@@ -99,7 +130,7 @@ function Contato() {
                       onChange={(e) => setEmail(e.target.value)}
                       type="email"
                       placeholder="seu@email.com"
-                      className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[#e04f11] focus:ring-1 focus:ring-[#e04f11]"
+                      className="w-full  text-slate-900 rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[#e04f11] focus:ring-1 focus:ring-[#e04f11]"
                     />
                   </div>
                 </div>
@@ -116,7 +147,7 @@ function Contato() {
                       onChange={(e) => setTelefone(e.target.value)}
                       type="tel"
                       placeholder="(00) 00000-0000"
-                      className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[#e04f11] focus:ring-1 focus:ring-[#e04f11]"
+                      className="w-full text-slate-900 rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[#e04f11] focus:ring-1 focus:ring-[#e04f11]"
                     />
                   </div>
 
@@ -130,7 +161,7 @@ function Contato() {
                       onChange={(e) => setEmpresa(e.target.value)}
                       type="text"
                       placeholder="Nome da empresa"
-                      className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[#e04f11] focus:ring-1 focus:ring-[#e04f11]"
+                      className="w-full text-slate-900 rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[#e04f11] focus:ring-1 focus:ring-[#e04f11]"
                     />
                   </div>
                 </div>
@@ -171,16 +202,26 @@ function Contato() {
                     onChange={(e) => setMensagem(e.target.value)}
                     rows={6}
                     placeholder="Descreva sua necessidade e como podemos ajudar..."
-                    className="w-full resize-none rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[#e04f11] focus:ring-1 focus:ring-[#e04f11]"
+                    className="w-full  text-slate-900 resize-none rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[#e04f11] focus:ring-1 focus:ring-[#e04f11]"
                   />
                 </div>
+                {mensagemSucesso && (
+                  <div className="flex items-center gap-3 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-100">
+                      ✓
+                    </div>
+
+                    <span>{mensagemSucesso}</span>
+                  </div>
+                )}
 
                 {/* BOTÃO */}
                 <button
                   type="submit"
-                  className="w-full rounded-md bg-[#e04f11] px-5 py-3 font-semibold text-white transition hover:bg-[#e33a10] active:scale-[0.99]"
+                  disabled={enviando}
+                  className="w-full rounded-md bg-[#e04f11] px-5 py-3 font-semibold text-white transition hover:bg-[#e33a10] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  Enviar Mensagem
+                  {enviando ? "Enviando..." : "Enviar Mensagem"}
                 </button>
               </form>
             </div>
