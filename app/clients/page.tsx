@@ -1,7 +1,7 @@
 import Header from '@/componentes/Header/Header'
 import React from 'react'
 
-function clientes() {
+function ClientesPage() {
   return (
     <>
     <Header/>
@@ -9,4 +9,4 @@ function clientes() {
   )
 }
 
-export default clientes
+export default ClientesPage

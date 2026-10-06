@@ -8,7 +8,6 @@ import DesafiosSecagem from "@/componentes/DesafiosSecagem/DesafiosSecagem";
 import QueimadoresCavacos from "@/componentes/QueimadoresCavacos/QueimadoresCavacos";
 import Footer from "@/componentes/Footer/Footer";
 
-
 export default function Home() {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -32,7 +31,6 @@ export default function Home() {
 
   return (
     <main className="relative min-h-screen bg-[#100606] text-white">
-      
       {/* Vídeo de fundo */}
       <div className="absolute inset-0">
         <video
@@ -41,12 +39,9 @@ export default function Home() {
           muted
           loop
           playsInline
-          className=" w-full object-cover object-[50%_65%] hue-rotate-180"
+          className=" w-full object-cover object-[50%_65%]"
         >
-          <source
-            src="/17923125-hd_1920_1080_60fps.mp4"
-            type="video/mp4"
-          />
+          <source src="/17923125-hd_1920_1080_60fps.mp4" type="video/mp4" />
         </video>
 
         {/* Camada escura */}
@@ -56,11 +51,11 @@ export default function Home() {
       <div className="relative z-10">
         <Header />
         <Hero />
-        <ImportanciaSecagem/>
-        <DesafiosSecagem/>
-        <QueimadoresCavacos/>
-        
-        <Footer/>
+        <ImportanciaSecagem />
+        <DesafiosSecagem />
+        <QueimadoresCavacos />
+
+        <Footer />
       </div>
     </main>
   );

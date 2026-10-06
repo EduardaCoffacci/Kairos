@@ -31,7 +31,7 @@ export default function Footer() {
               <a
                 href="#"
                 aria-label="Facebook"
-                className="flex h-11 w-11 items-center justify-center rounded-full  transition hover:bg-white hover:text-[#7f1724]"
+                className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--kairos-orange)] transition hover:bg-white hover:text-[var(--kairos-orange)]"
               >
                 <FaFacebook size={21} />
               </a>
@@ -39,7 +39,7 @@ export default function Footer() {
               <a
                 href="#"
                 aria-label="Instagram"
-                className="flex h-11 w-11 items-center justify-center rounded-full  transition hover:bg-white hover:text-[#7f1724]"
+                className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--kairos-orange)] transition hover:bg-white hover:text-[var(--kairos-orange)]"
               >
                 <FaInstagram size={21} />
               </a>
@@ -47,7 +47,7 @@ export default function Footer() {
               <a
                 href="#"
                 aria-label="LinkedIn"
-                className="flex h-11 w-11 items-center justify-center rounded-full  transition hover:bg-white hover:text-[#7f1724]"
+                className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--kairos-orange)] transition hover:bg-white hover:text-[var(--kairos-orange)]"
               >
                 <FaLinkedin size={21} />
               </a>
@@ -61,28 +61,28 @@ export default function Footer() {
             <nav className="mt-5 flex flex-col gap-4">
               <Link
                 href="/"
-                className="text-white/80 transition hover:text-white"
+                className="text-white/80 transition hover:text-[var(--kairos-orange)]"
               >
                 Home
               </Link>
 
               <Link
                 href="/produtos"
-                className="text-white/80 transition hover:text-white"
+                className="text-white/80 transition hover:text-[var(--kairos-orange)]"
               >
                 Produtos
               </Link>
 
               <Link
                 href="/sobre"
-                className="text-white/80 transition hover:text-white"
+                className="text-white/80 transition hover:text-[var(--kairos-orange)]"
               >
                 Sobre Nós
               </Link>
 
               <Link
                 href="/contato"
-                className="text-white/80 transition hover:text-white"
+                className="text-white/80 transition hover:text-[var(--kairos-orange)]"
               >
                 Contato
               </Link>
@@ -96,35 +96,35 @@ export default function Footer() {
             <nav className="mt-5 flex flex-col gap-4">
               <Link
                 href="/produtos/caldeiras"
-                className="text-white/80 transition hover:text-white"
+                className="text-white/80 transition hover:text-[var(--kairos-orange)]"
               >
                 Fornalhas de Biomassa
               </Link>
 
               <Link
                 href="/produtos/rti"
-                className="text-white/80 transition hover:text-white"
+                className="text-white/80 transition hover:text-[var(--kairos-orange)]"
               >
                 RTI - Grelhas Móveis
               </Link>
 
               <Link
                 href="/produtos/rtmv"
-                className="text-white/80 transition hover:text-white"
+                className="text-white/80 transition hover:text-[var(--kairos-orange)]"
               >
                 RTMV - Grelhas Móveis
               </Link>
 
               <Link
                 href="/produtos/rtm"
-                className="text-white/80 transition hover:text-white"
+                className="text-white/80 transition hover:text-[var(--kairos-orange)]"
               >
                 RTM - Grelhas Fixas Modulares
               </Link>
 
               <Link
                 href="/produtos/rta"
-                className="text-white/80 transition hover:text-white"
+                className="text-white/80 transition hover:text-[var(--kairos-orange)]"
               >
                 RTA - Grelhas Fixas
               </Link>
@@ -138,18 +138,24 @@ export default function Footer() {
             <div className="mt-5 space-y-5">
               {/* ENDEREÇO */}
               <div className="flex gap-4">
-                <FaMapMarkerAlt className="mt-1 shrink-0" size={24} />
+                <FaMapMarkerAlt
+                  className="mt-1 shrink-0 text-[var(--kairos-orange)]"
+                  size={24}
+                />
 
                 <p className="text-sm leading-6 text-white/80 sm:text-base">
                   {/*Rua , N° - Bairro,*/}
-                  <br />
+                 
                   Navegantes - SC
                 </p>
               </div>
 
               {/* TELEFONES */}
               <div className="flex gap-4">
-                <FaPhone className="mt-1 shrink-0" size={24} />
+                <FaPhone
+                  className="mt-1 shrink-0 text-[var(--kairos-orange)]"
+                  size={24}
+                />
 
                 <div className="flex flex-col gap-2 text-sm text-white/80 sm:text-base">
                   <span>(47) 99218-7965</span>
@@ -158,7 +164,10 @@ export default function Footer() {
 
               {/* EMAIL */}
               <div className="flex gap-4">
-                <FaEnvelope className="mt-1 shrink-0" size={24} />
+                <FaEnvelope
+                  className="mt-1 shrink-0 text-[var(--kairos-orange)]"
+                  size={24}
+                />
 
                 <div className="flex flex-col gap-2 text-sm text-white/80 sm:text-base">
                   <span>comercial@kairosindustrial.com.br</span>
@@ -183,12 +192,15 @@ export default function Footer() {
           <div className="flex flex-wrap gap-6 text-sm text-white/80 sm:text-base">
             <Link
               href="/politica-de-privacidade"
-              className="transition hover:text-white"
+              className="transition hover:text-[var(--kairos-orange)]"
             >
               Política de Privacidade
             </Link>
 
-            <Link href="/termos-de-uso" className="transition hover:text-white">
+            <Link
+              href="/termos-de-uso"
+              className="transition hover:text-[var(--kairos-orange)]"
+            >
               Termos de Uso
             </Link>
           </div>

@@ -1,7 +1,7 @@
 import Header from "@/componentes/Header/Header";
 import React from "react";
 
-function nossahistoria() {
+function NossahistoriaPage() {
   return <>
   <Header/>
   </>
@@ -9,4 +9,4 @@ function nossahistoria() {
    
 }
 
-export default nossahistoria;
+export default NossahistoriaPage;

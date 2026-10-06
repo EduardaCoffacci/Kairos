@@ -29,7 +29,7 @@ export default function Hero() {
         <div className="mt-5 flex w-full flex-col items-center justify-center gap-3 sm:flex-row sm:gap-5 lg:mt-6">
           <a
             href="#produtos"
-            className="w-full whitespace-nowrap max-w-[320px] rounded-lg bg-[#e04f11] px-1 py-1 text-center text-[17px] font-bold transition hover:bg-[#e04f11] sm:w-auto sm:px-9 sm:py-4 sm:text-[20px]"
+            className="w-full max-w-[320px] whitespace-nowrap rounded-lg bg-[var(--kairos-orange)] px-1 py-1 text-center text-[17px] font-bold transition hover:bg-[var(--kairos-orange)] sm:w-auto sm:px-9 sm:py-4 sm:text-[20px]"
           >
             Conheça Nossos Produtos
           </a>
@@ -89,10 +89,11 @@ export default function Hero() {
           </div>
         </div>
       </div>
+
       {/* Atendimento */}
 
       <div className="fixed bottom-4 right-4 z-50 sm:bottom-6 sm:right-6 lg:bottom-7 lg:right-7">
-        <div className="relative ">
+        <div className="relative">
           {/* Balão */}
           <div className="absolute -top-12 right-0 whitespace-nowrap rounded-2xl bg-white px-3 py-2 text-[13px] font-semibold text-gray-800 shadow-lg sm:-top-14 sm:px-4 sm:py-3 sm:text-[14px] lg:-top-16 lg:px-5 lg:py-4 lg:text-[16px]">
             Posso ajudar?
@@ -107,7 +108,7 @@ export default function Hero() {
             className="relative flex h-[58px] w-[58px] animate-float items-center justify-center sm:h-[65px] sm:w-[65px] lg:h-[75px] lg:w-[75px]"
           >
             {/* Atendente */}
-            <div className="relative h-full w-full sombra-abrindo  overflow-hidden rounded-full border-4 border-white bg-[#e04f11] ">
+            <div className="relative h-full w-full sombra-abrindo overflow-hidden rounded-full border-4 border-white bg-[var(--kairos-orange)]">
               <Image
                 src="/atendente.jpg"
                 alt="Atendimento pelo WhatsApp"
@@ -118,7 +119,7 @@ export default function Hero() {
           </a>
 
           {/* Status */}
-          <span className="absolute bottom-2  right-2 h-3 w-3 rounded-full border-2 border-white bg-green-500 sm:h-4 sm:w-4" />
+          <span className="absolute bottom-2 right-2 h-3 w-3 rounded-full border-2 border-white bg-green-500 sm:h-4 sm:w-4" />
         </div>
       </div>
     </section>

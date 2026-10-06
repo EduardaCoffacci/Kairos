@@ -1,8 +1,9 @@
-//import Header from "@/componentes/Header/Header";
 "use client";
 
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import React from "react";
-import { useState } from "react";
 import {
   Send,
   MapPin,
@@ -15,7 +16,7 @@ import {
 import Header from "@/componentes/Header/Header";
 import Footer from "@/componentes/Footer/Footer";
 
-const equipamentos = [
+const equipment = [
   "Moega",
   "Transportador de correia",
   "Peneira de disco",
@@ -28,7 +29,7 @@ const equipamentos = [
   "Outros",
 ];
 
-function Contato() {
+function ContactPage() {
   const [assunto, setAssunto] = useState("");
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
@@ -46,7 +47,7 @@ function Contato() {
 
     const dados = {
       nome,
-      email,  
+      email,
       telefone,
       empresa,
       assunto,
@@ -96,7 +97,7 @@ function Contato() {
             {/* FORMULÁRIO */}
             <div className="rounded-xl bg-white p-5 shadow-sm sm:p-7 lg:p-8">
               <div className="mb-7 flex items-center gap-3">
-                <Send className="h-6 w-6 text-[#e04f11]" />
+                <Send className="h-6 w-6 text-[var(--kairos-orange)]" />
 
                 <h2 className="text-xl font-bold text-slate-800 sm:text-2xl">
                   Solicite um Orçamento
@@ -116,7 +117,7 @@ function Contato() {
                       value={nome}
                       onChange={(e) => setNome(e.target.value)}
                       placeholder="Digite seu nome "
-                      className="w-full rounded-md border text-slate-900 border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[#e04f11] focus:ring-1 focus:ring-[#e04f11]"
+                      className="w-full rounded-md border text-slate-900 border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[var(--kairos-orange)] focus:ring-1 focus:ring-[var(--kairos-orange)]"
                     />
                   </div>
 
@@ -130,7 +131,7 @@ function Contato() {
                       onChange={(e) => setEmail(e.target.value)}
                       type="email"
                       placeholder="seu@email.com"
-                      className="w-full  text-slate-900 rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[#e04f11] focus:ring-1 focus:ring-[#e04f11]"
+                      className="w-full text-slate-900 rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[var(--kairos-orange)] focus:ring-1 focus:ring-[var(--kairos-orange)]"
                     />
                   </div>
                 </div>
@@ -147,7 +148,7 @@ function Contato() {
                       onChange={(e) => setTelefone(e.target.value)}
                       type="tel"
                       placeholder="(00) 00000-0000"
-                      className="w-full text-slate-900 rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[#e04f11] focus:ring-1 focus:ring-[#e04f11]"
+                      className="w-full text-slate-900 rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[var(--kairos-orange)] focus:ring-1 focus:ring-[var(--kairos-orange)]"
                     />
                   </div>
 
@@ -161,7 +162,7 @@ function Contato() {
                       onChange={(e) => setEmpresa(e.target.value)}
                       type="text"
                       placeholder="Nome da empresa"
-                      className="w-full text-slate-900 rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[#e04f11] focus:ring-1 focus:ring-[#e04f11]"
+                      className="w-full text-slate-900 rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[var(--kairos-orange)] focus:ring-1 focus:ring-[var(--kairos-orange)]"
                     />
                   </div>
                 </div>
@@ -176,11 +177,11 @@ function Contato() {
                     <select
                       value={assunto}
                       onChange={(e) => setAssunto(e.target.value)}
-                      className="w-full appearance-none rounded-md border border-slate-300 bg-slate-50 px-3 py-3 pr-10 text-sm text-slate-600 outline-none transition focus:border-[#e04f11] focus:ring-1 focus:ring-[#8f1724]"
+                      className="w-full appearance-none rounded-md border border-slate-300 bg-slate-50 px-3 py-3 pr-10 text-sm text-slate-600 outline-none transition focus:border-[var(--kairos-orange)] focus:ring-1 focus:ring-[var(--kairos-orange)]"
                     >
                       <option value="">Selecione o equipamento</option>
 
-                      {equipamentos.map((equipamento) => (
+                      {equipment.map((equipamento) => (
                         <option key={equipamento} value={equipamento}>
                           {equipamento}
                         </option>
@@ -202,9 +203,10 @@ function Contato() {
                     onChange={(e) => setMensagem(e.target.value)}
                     rows={6}
                     placeholder="Descreva sua necessidade e como podemos ajudar..."
-                    className="w-full  text-slate-900 resize-none rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[#e04f11] focus:ring-1 focus:ring-[#e04f11]"
+                    className="w-full text-slate-900 resize-none rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[var(--kairos-orange)] focus:ring-1 focus:ring-[var(--kairos-orange)]"
                   />
                 </div>
+
                 {mensagemSucesso && (
                   <div className="flex items-center gap-3 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
                     <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-100">
@@ -219,7 +221,7 @@ function Contato() {
                 <button
                   type="submit"
                   disabled={enviando}
-                  className="w-full rounded-md bg-[#e04f11] px-5 py-3 font-semibold text-white transition hover:bg-[#e33a10] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70"
+                  className="w-full rounded-md bg-[var(--kairos-orange)] px-5 py-3 font-semibold text-white transition hover:bg-[#e33a10] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {enviando ? "Enviando..." : "Enviar Mensagem"}
                 </button>
@@ -261,7 +263,7 @@ function Contato() {
               </div>
 
               {/* ASSISTÊNCIA */}
-              <div className="rounded-xl bg-[#e04f11] p-6 text-white sm:p-7">
+              <div className="rounded-xl bg-[var(--kairos-orange)] p-6 text-white sm:p-7">
                 <div className="mb-4 flex items-center gap-3">
                   <Wrench className="h-6 w-6" />
 
@@ -324,7 +326,7 @@ function InfoCard({ icon, title, children }: InfoCardProps) {
   return (
     <div className="rounded-xl bg-white p-5 shadow-sm">
       <div className="mb-4 flex items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f3e5e7] text-[#e04f11]">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[rgba(224,79,17,0.10)] text-[var(--kairos-orange)]">
           {icon}
         </div>
 
@@ -336,4 +338,4 @@ function InfoCard({ icon, title, children }: InfoCardProps) {
   );
 }
 
-export default Contato;
+export default ContactPage;

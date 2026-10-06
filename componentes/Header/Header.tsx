@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import Button from "../Button/Button";
 
 interface HeaderProps {
   darkText?: boolean;
@@ -56,7 +57,7 @@ const Header = ({ darkText = false }: HeaderProps) => {
             className={`relative transition-colors duration-500 ${
               darkText || isScrolled ? "text-black" : "text-white"
             } after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:w-0 after:transition-all after:duration-700 hover:after:w-full ${
-              darkText || isScrolled ? "after:bg-black" : "after:bg-[#f7f3f4]"
+              darkText || isScrolled ? "after:bg-black" : "after:bg-white"
             }`}
           >
             Home
@@ -67,7 +68,7 @@ const Header = ({ darkText = false }: HeaderProps) => {
             className={`relative transition-colors duration-500 ${
               darkText || isScrolled ? "text-black" : "text-white"
             } after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:w-0 after:transition-all after:duration-700 hover:after:w-full ${
-              isScrolled ? "after:bg-black" : "after:bg-[#f7f3f4]"
+              isScrolled ? "after:bg-black" : "after:bg-white"
             }`}
           >
             Fornalhas
@@ -78,7 +79,7 @@ const Header = ({ darkText = false }: HeaderProps) => {
             className={`relative transition-colors duration-500 ${
               darkText || isScrolled ? "text-black" : "text-white"
             } after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:w-0 after:transition-all after:duration-700 hover:after:w-full ${
-              isScrolled ? "after:bg-black" : "after:bg-[#f7f3f4]"
+              isScrolled ? "after:bg-black" : "after:bg-white"
             }`}
           >
             Clientes
@@ -89,7 +90,7 @@ const Header = ({ darkText = false }: HeaderProps) => {
             className={`relative transition-colors duration-500 ${
               darkText || isScrolled ? "text-black" : "text-white"
             } after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:w-0 after:transition-all after:duration-700 hover:after:w-full ${
-              isScrolled ? "after:bg-black" : "after:bg-[#f7f3f4]"
+              isScrolled ? "after:bg-black" : "after:bg-white"
             }`}
           >
             Nossa História
@@ -100,7 +101,7 @@ const Header = ({ darkText = false }: HeaderProps) => {
             className={`relative transition-colors duration-500 ${
               darkText || isScrolled ? "text-black" : "text-white"
             } after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:w-0 after:transition-all after:duration-700 hover:after:w-full ${
-              isScrolled ? "after:bg-black" : "after:bg-[#f7f3f4]"
+              isScrolled ? "after:bg-black" : "after:bg-white"
             }`}
           >
             Contato
@@ -109,12 +110,7 @@ const Header = ({ darkText = false }: HeaderProps) => {
 
         {/* Botão Desktop */}
         <div className="hidden w-[250px] justify-end lg:flex xl:w-[370px]">
-          <a
-            href="#"
-            className="rounded-lg bg-[#e04f11] px-4 py-2 text-[14px] font-bold lg:px-4 lg:py-3 xl:px-5 xl:text-[16px]"
-          >
-            Solicitar Orçamento
-          </a>
+          <Button href="/contato">Solicitar Assistência Técnica</Button>
         </div>
 
         {/* Botão mobile */}
@@ -170,12 +166,7 @@ const Header = ({ darkText = false }: HeaderProps) => {
 
           <Link href="/contato">Contato</Link>
 
-          <a
-            href="#"
-            className="rounded-lg bg-[ #e04f11] px-6 py-3 font-bold text-white"
-          >
-            Assistência Técnica
-          </a>
+          <Button href="/contato">Solicitar Assistência Técnica</Button>
         </div>
       </nav>
     </header>
