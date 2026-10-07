@@ -1,18 +1,17 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import React from "react";
+import { useState } from "react";
+import type { ReactNode, SubmitEvent } from "react";
 import {
-  Send,
+  ChevronDown,
+  Clock,
+  Mail,
   MapPin,
   Phone,
-  Mail,
-  Clock,
+  Send,
   Wrench,
-  ChevronDown,
 } from "lucide-react";
+
 import Header from "@/componentes/Header/Header";
 import Footer from "@/componentes/Footer/Footer";
 
@@ -29,32 +28,67 @@ const equipment = [
   "Outros",
 ];
 
+const contactCards = [
+  {
+    type: "address",
+    title: "Endereço",
+    icon: MapPin,
+  },
+  {
+    type: "phone",
+    title: "Telefone",
+    icon: Phone,
+  },
+  {
+    type: "email",
+    title: "E-mail",
+    icon: Mail,
+  },
+  {
+    type: "hours",
+    title: "Horário",
+    icon: Clock,
+  },
+];
+
+interface FormData {
+  nome: string;
+  email: string;
+  telefone: string;
+  empresa: string;
+  assunto: string;
+  mensagem: string;
+}
+
+const initialFormData: FormData = {
+  nome: "",
+  email: "",
+  telefone: "",
+  empresa: "",
+  assunto: "",
+  mensagem: "",
+};
+
 function ContactPage() {
-  const [assunto, setAssunto] = useState("");
-  const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
-  const [telefone, setTelefone] = useState("");
-  const [empresa, setEmpresa] = useState("");
-  const [mensagem, setMensagem] = useState("");
+  const [formData, setFormData] = useState<FormData>(initialFormData);
   const [mensagemSucesso, setMensagemSucesso] = useState("");
   const [enviando, setEnviando] = useState(false);
 
-  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleChange = (
+    field: keyof FormData,
+    value: string,
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     setMensagemSucesso("");
     setEnviando(true);
-
-    const dados = {
-      nome,
-      email,
-      telefone,
-      empresa,
-      assunto,
-      mensagem,
-    };
-
-    console.log(dados);
 
     try {
       const resposta = await fetch(
@@ -64,7 +98,7 @@ function ContactPage() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(dados),
+          body: JSON.stringify(formData),
         },
       );
 
@@ -72,15 +106,8 @@ function ContactPage() {
         throw new Error("Erro ao enviar formulário");
       }
 
-      setNome("");
-      setEmail("");
-      setTelefone("");
-      setEmpresa("");
-      setAssunto("");
-      setMensagem("");
-
+      setFormData(initialFormData);
       setMensagemSucesso("Mensagem enviada com sucesso!");
-      console.log("MENSAGEM DE SUCESSO ATIVADA");
     } catch (error) {
       console.error("Erro ao enviar formulário:", error);
     } finally {
@@ -91,9 +118,11 @@ function ContactPage() {
   return (
     <>
       <Header darkText />
-      <section className="w-full bg-slate-50 pt-[80px] pb-10 sm:pt-[90px] sm:pb-14 lg:pt-[110px] lg:pb-16 xl:pt-[180px]">
+
+      <section className="w-full bg-slate-50 pb-10 pt-[80px] sm:pb-14 sm:pt-[90px] lg:pb-16 lg:pt-[110px] xl:pt-[180px]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.1fr_1fr]">
+
             {/* FORMULÁRIO */}
             <div className="rounded-xl bg-white p-5 shadow-sm sm:p-7 lg:p-8">
               <div className="mb-7 flex items-center gap-3">
@@ -105,66 +134,42 @@ function ContactPage() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-5">
-                {/* Nome + Email */}
+
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-slate-700">
-                      Nome completo <span className="text-orange-600">*</span>
-                    </label>
+                  <FormField
+                    label="Nome completo"
+                    required
+                    value={formData.nome}
+                    placeholder="Digite seu nome"
+                    onChange={(value) => handleChange("nome", value)}
+                  />
 
-                    <input
-                      type="text"
-                      value={nome}
-                      onChange={(e) => setNome(e.target.value)}
-                      placeholder="Digite seu nome "
-                      className="w-full rounded-md border text-slate-900 border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[var(--kairos-orange)] focus:ring-1 focus:ring-[var(--kairos-orange)]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-slate-700">
-                      E-mail <span className="text-orange-600">*</span>
-                    </label>
-
-                    <input
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      type="email"
-                      placeholder="seu@email.com"
-                      className="w-full text-slate-900 rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[var(--kairos-orange)] focus:ring-1 focus:ring-[var(--kairos-orange)]"
-                    />
-                  </div>
+                  <FormField
+                    label="E-mail"
+                    required
+                    type="email"
+                    value={formData.email}
+                    placeholder="seu@email.com"
+                    onChange={(value) => handleChange("email", value)}
+                  />
                 </div>
 
-                {/* Telefone + Empresa */}
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-slate-700">
-                      Telefone <span className="text-orange-600">*</span>
-                    </label>
+                  <FormField
+                    label="Telefone"
+                    required
+                    type="tel"
+                    value={formData.telefone}
+                    placeholder="(00) 00000-0000"
+                    onChange={(value) => handleChange("telefone", value)}
+                  />
 
-                    <input
-                      value={telefone}
-                      onChange={(e) => setTelefone(e.target.value)}
-                      type="tel"
-                      placeholder="(00) 00000-0000"
-                      className="w-full text-slate-900 rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[var(--kairos-orange)] focus:ring-1 focus:ring-[var(--kairos-orange)]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-slate-700">
-                      Empresa
-                    </label>
-
-                    <input
-                      value={empresa}
-                      onChange={(e) => setEmpresa(e.target.value)}
-                      type="text"
-                      placeholder="Nome da empresa"
-                      className="w-full text-slate-900 rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[var(--kairos-orange)] focus:ring-1 focus:ring-[var(--kairos-orange)]"
-                    />
-                  </div>
+                  <FormField
+                    label="Empresa"
+                    value={formData.empresa}
+                    placeholder="Nome da empresa"
+                    onChange={(value) => handleChange("empresa", value)}
+                  />
                 </div>
 
                 {/* ASSUNTO */}
@@ -175,11 +180,16 @@ function ContactPage() {
 
                   <div className="relative">
                     <select
-                      value={assunto}
-                      onChange={(e) => setAssunto(e.target.value)}
+                      required
+                      value={formData.assunto}
+                      onChange={(e) =>
+                        handleChange("assunto", e.target.value)
+                      }
                       className="w-full appearance-none rounded-md border border-slate-300 bg-slate-50 px-3 py-3 pr-10 text-sm text-slate-600 outline-none transition focus:border-[var(--kairos-orange)] focus:ring-1 focus:ring-[var(--kairos-orange)]"
                     >
-                      <option value="">Selecione o equipamento</option>
+                      <option value="">
+                        Selecione o equipamento
+                      </option>
 
                       {equipment.map((equipamento) => (
                         <option key={equipamento} value={equipamento}>
@@ -199,11 +209,14 @@ function ContactPage() {
                   </label>
 
                   <textarea
-                    value={mensagem}
-                    onChange={(e) => setMensagem(e.target.value)}
+                    required
                     rows={6}
+                    value={formData.mensagem}
+                    onChange={(e) =>
+                      handleChange("mensagem", e.target.value)
+                    }
                     placeholder="Descreva sua necessidade e como podemos ajudar..."
-                    className="w-full text-slate-900 resize-none rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm outline-none transition focus:border-[var(--kairos-orange)] focus:ring-1 focus:ring-[var(--kairos-orange)]"
+                    className="w-full resize-none rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-[var(--kairos-orange)] focus:ring-1 focus:ring-[var(--kairos-orange)]"
                   />
                 </div>
 
@@ -217,7 +230,6 @@ function ContactPage() {
                   </div>
                 )}
 
-                {/* BOTÃO */}
                 <button
                   type="submit"
                   disabled={enviando}
@@ -230,36 +242,20 @@ function ContactPage() {
 
             {/* LADO DIREITO */}
             <div className="flex flex-col gap-5">
-              {/* CARDS */}
+
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                <InfoCard
-                  icon={<MapPin className="h-5 w-5" />}
-                  title="Endereço"
-                >
-                  {/*Rua , N° - Bairro*/}
-                  <br />
-                  Navegantes - SC
-                  <br />
-                  CEP:
-                </InfoCard>
+                {contactCards.map((card) => {
+                  const Icon = card.icon;
 
-                <InfoCard icon={<Phone className="h-5 w-5" />} title="Telefone">
-                  (47) 0000-0000
-                  <br />
-                  (47) 0000-0000
-                </InfoCard>
-
-                <InfoCard icon={<Mail className="h-5 w-5" />} title="E-mail">
-                  comercial@kairosindustrial.com.br
-                </InfoCard>
-
-                <InfoCard icon={<Clock className="h-5 w-5" />} title="Horário">
-                  Segunda à Sexta
-                  <br />
-                  08:00 às 18:00
-                  <br />
-                  Sábados: 08:00 às 12:00
-                </InfoCard>
+                  return (
+                    <InfoCard
+                      key={card.type}
+                      icon={<Icon className="h-5 w-5" />}
+                      title={card.title}
+                      type={card.type}
+                    />
+                  );
+                })}
               </div>
 
               {/* ASSISTÊNCIA */}
@@ -309,20 +305,89 @@ function ContactPage() {
           </div>
         </div>
       </section>
+
       <Footer />
     </>
   );
 }
 
-/* COMPONENTE DOS CARDS */
+/* CAMPO DO FORMULÁRIO */
 
-interface InfoCardProps {
-  icon: React.ReactNode;
-  title: string;
-  children: React.ReactNode;
+interface FormFieldProps {
+  label: string;
+  value: string;
+  placeholder: string;
+  onChange: (value: string) => void;
+  type?: string;
+  required?: boolean;
 }
 
-function InfoCard({ icon, title, children }: InfoCardProps) {
+function FormField({
+  label,
+  value,
+  placeholder,
+  onChange,
+  type = "text",
+  required = false,
+}: FormFieldProps) {
+  return (
+    <div>
+      <label className="mb-2 block text-sm font-medium text-slate-700">
+        {label}{" "}
+        {required && <span className="text-orange-600">*</span>}
+      </label>
+
+      <input
+        required={required}
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-[var(--kairos-orange)] focus:ring-1 focus:ring-[var(--kairos-orange)]"
+      />
+    </div>
+  );
+}
+
+/* CARD DE INFORMAÇÃO */
+
+interface InfoCardProps {
+  icon: ReactNode;
+  title: string;
+  type: string;
+}
+
+function InfoCard({ icon, title, type }: InfoCardProps) {
+  const content = {
+    address: (
+      <>
+        Navegantes - SC
+        <br />
+        CEP:
+      </>
+    ),
+
+    phone: (
+      <>
+        (47) 0000-0000
+        <br />
+        (47) 0000-0000
+      </>
+    ),
+
+    email: <>comercial@kairosindustrial.com.br</>,
+
+    hours: (
+      <>
+        Segunda à Sexta
+        <br />
+        08:00 às 18:00
+        <br />
+        Sábados: 08:00 às 12:00
+      </>
+    ),
+  };
+
   return (
     <div className="rounded-xl bg-white p-5 shadow-sm">
       <div className="mb-4 flex items-center gap-3">
@@ -330,10 +395,14 @@ function InfoCard({ icon, title, children }: InfoCardProps) {
           {icon}
         </div>
 
-        <h3 className="font-semibold text-slate-800">{title}</h3>
+        <h3 className="font-semibold text-slate-800">
+          {title}
+        </h3>
       </div>
 
-      <div className="text-sm leading-5 text-slate-500">{children}</div>
+      <div className="text-sm leading-5 text-slate-500">
+        {content[type as keyof typeof content]}
+      </div>
     </div>
   );
 }

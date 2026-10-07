@@ -74,6 +74,8 @@ const Header = ({ darkText = false }: HeaderProps) => {
             Fornalhas
           </Link>
 
+         
+          {/*
           <Link
             href="/clientes"
             className={`relative transition-colors duration-500 ${
@@ -84,6 +86,7 @@ const Header = ({ darkText = false }: HeaderProps) => {
           >
             Clientes
           </Link>
+          */}
 
           <Link
             href="/nossahistoria"
@@ -160,7 +163,8 @@ const Header = ({ darkText = false }: HeaderProps) => {
 
           <Link href="/fornalhas">Fornalhas</Link>
 
-          <Link href="/clientes">Clientes</Link>
+      
+          {/* <Link href="/clientes">Clientes</Link> */}
 
           <Link href="/nossahistoria">Nossa História</Link>
 

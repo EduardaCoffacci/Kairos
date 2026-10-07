@@ -57,13 +57,13 @@ export default function FornalhasPage() {
         <section className="relative min-h-[700px] overflow-hidden">
           {/* Imagem de fundo */}
 
-          {/*  <Image
-          src={}
-          alt="Fornalha industrial"
-          fill
-          priority
-          className="object-cover"
-        />*/}
+          <Image
+            src={"/images/fornalhas/imagefornalha.jpeg"}
+            alt="Fornalha industrial"
+            fill
+            priority
+            className="object-cover"
+          />
 
           {/* Overlay */}
           <div className="absolute inset-0 bg-black/70" />
@@ -139,23 +139,13 @@ export default function FornalhasPage() {
 
             <div className="relative h-[450px] overflow-hidden rounded-2xl">
               <Image
-                src=""
+                src={"/images/fornalhas/imagefornalha.jpeg"}
                 alt="Equipamento industrial"
                 fill
-                className="object-cover transition duration-700 hover:scale-105"
+                className="object-contain transition duration-700 hover:scale-105"
               />
 
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-
-              <div className="absolute bottom-6 left-6">
-                <p className="text-sm uppercase tracking-widest text-[var(--kairos-orange)]">
-                  Kairos Indústria
-                </p>
-
-                <p className="mt-1 text-xl font-semibold">
-                  Soluções para processos térmicos
-                </p>
-              </div>
             </div>
           </div>
         </section>
@@ -170,10 +160,7 @@ export default function FornalhasPage() {
 
               <h2 className="mt-4 text-4xl font-bold md:text-5xl">
                 Aplicações das nossas
-                <span className="text-[var(--kairos-orange)]">
-                  {" "}
-                  fornalhas
-                </span>
+                <span className="text-[var(--kairos-orange)]"> fornalhas</span>
               </h2>
 
               <p className="mt-5 leading-8 text-gray-400">
@@ -189,8 +176,8 @@ export default function FornalhasPage() {
                   className="group overflow-hidden rounded-2xl border border-white/10 bg-[#101010] transition duration-300 hover:-translate-y-2 hover:border-[var(--kairos-orange)]/60"
                 >
                   <div className="relative h-64 overflow-hidden">
-                    {/*   <Image
-                    src={}
+                    {/*  <Image
+                    src={"/images/fornalhas/imagefornalha.jpeg}
                     alt={}
                     fill
                     className="object-cover transition duration-700 group-hover:scale-110"
@@ -200,9 +187,7 @@ export default function FornalhasPage() {
                   </div>
 
                   <div className="p-7">
-                    <h3 className="text-2xl font-bold">
-                      {application.title}
-                    </h3>
+                    <h3 className="text-2xl font-bold">{application.title}</h3>
 
                     <p className="mt-4 leading-7 text-gray-400">
                       {application.description}
