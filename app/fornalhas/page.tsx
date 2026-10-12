@@ -4,19 +4,22 @@ import Footer from "@/componentes/Footer/Footer";
 
 const applications = [
   {
-    title: "Caldeiras",
+    title: "Moegas e Silos",
     description:
-      "Soluções desenvolvidas para aplicações de geração de vapor e processos térmicos industriais.",
+      "Soluções para armazenamento e controle de materiais utilizados em processos industriais.",
+    image: "/images/fornalhas/armazenamento.jpg",
   },
   {
-    title: "Secadores",
+    title: "Esteiras Industriais",
     description:
-      "Aplicações que exigem fornecimento contínuo e controlado de energia térmica.",
+      "Sistemas para movimentação e alimentação contínua de materiais em linhas de produção.",
+    image: "/images/fornalhas/esteira.jpg",
   },
   {
-    title: "Processos industriais",
+    title: "Fornalhas",
     description:
-      "Equipamentos pensados para diferentes necessidades de aquecimento e processos térmicos.",
+      "Tecnologia para aproveitamento energético de biomassa em processos industriais.",
+    image: "/images/fornalhas/fornalhas.jpg",
   },
 ];
 
@@ -176,12 +179,12 @@ export default function FornalhasPage() {
                   className="group overflow-hidden rounded-2xl border border-white/10 bg-[#101010] transition duration-300 hover:-translate-y-2 hover:border-[var(--kairos-orange)]/60"
                 >
                   <div className="relative h-64 overflow-hidden">
-                    {/*  <Image
-                    src={"/images/fornalhas/imagefornalha.jpeg}
-                    alt={}
-                    fill
-                    className="object-cover transition duration-700 group-hover:scale-110"
-                  /> Placeholder for image */}
+                    <Image
+                      src={application.image}
+                      alt={"Sistema industrial de armazenamento"}
+                      fill
+                      className="object-cover transition duration-700 group-hover:scale-110"
+                    />
 
                     <div className="absolute inset-0 bg-black/30 transition group-hover:bg-black/10" />
                   </div>
