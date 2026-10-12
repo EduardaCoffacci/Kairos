@@ -87,6 +87,16 @@ const Header = ({ darkText = false }: HeaderProps) => {
             Clientes
           </Link>
           */}
+          <Link
+            href="/produtos"
+            className={`relative transition-colors duration-500 ${
+              darkText || isScrolled ? "text-black" : "text-white"
+            } after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:w-0 after:transition-all after:duration-700 hover:after:w-full ${
+              isScrolled ? "after:bg-black" : "after:bg-white"
+            }`}
+          >
+            Produtos
+          </Link>
 
           <Link
             href="/nossahistoria"
@@ -163,7 +173,7 @@ const Header = ({ darkText = false }: HeaderProps) => {
 
           <Link href="/fornalhas">Fornalhas</Link>
 
-      
+          <Link href="/produtos">Produtos</Link>
           {/* <Link href="/clientes">Clientes</Link> */}
 
           <Link href="/nossahistoria">Nossa História</Link>

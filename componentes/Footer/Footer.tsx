@@ -30,22 +30,6 @@ export default function Footer() {
             <div className="mt-6 flex gap-4">
               <a
                 href="#"
-                aria-label="Facebook"
-                className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--kairos-orange)] transition hover:bg-white hover:text-[var(--kairos-orange)]"
-              >
-                <FaFacebook size={21} />
-              </a>
-
-              <a
-                href="#"
-                aria-label="Instagram"
-                className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--kairos-orange)] transition hover:bg-white hover:text-[var(--kairos-orange)]"
-              >
-                <FaInstagram size={21} />
-              </a>
-
-              <a
-                href="#"
                 aria-label="LinkedIn"
                 className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--kairos-orange)] transition hover:bg-white hover:text-[var(--kairos-orange)]"
               >
@@ -145,7 +129,6 @@ export default function Footer() {
 
                 <p className="text-sm leading-6 text-white/80 sm:text-base">
                   {/*Rua , N° - Bairro,*/}
-                 
                   Navegantes - SC
                 </p>
               </div>

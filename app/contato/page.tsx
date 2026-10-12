@@ -74,10 +74,7 @@ function ContactPage() {
   const [mensagemSucesso, setMensagemSucesso] = useState("");
   const [enviando, setEnviando] = useState(false);
 
-  const handleChange = (
-    field: keyof FormData,
-    value: string,
-  ) => {
+  const handleChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -122,7 +119,6 @@ function ContactPage() {
       <section className="w-full bg-slate-50 pb-10 pt-[80px] sm:pb-14 sm:pt-[90px] lg:pb-16 lg:pt-[110px] xl:pt-[180px]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.1fr_1fr]">
-
             {/* FORMULÁRIO */}
             <div className="rounded-xl bg-white p-5 shadow-sm sm:p-7 lg:p-8">
               <div className="mb-7 flex items-center gap-3">
@@ -134,7 +130,6 @@ function ContactPage() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-5">
-
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   <FormField
                     label="Nome completo"
@@ -182,14 +177,10 @@ function ContactPage() {
                     <select
                       required
                       value={formData.assunto}
-                      onChange={(e) =>
-                        handleChange("assunto", e.target.value)
-                      }
+                      onChange={(e) => handleChange("assunto", e.target.value)}
                       className="w-full appearance-none rounded-md border border-slate-300 bg-slate-50 px-3 py-3 pr-10 text-sm text-slate-600 outline-none transition focus:border-[var(--kairos-orange)] focus:ring-1 focus:ring-[var(--kairos-orange)]"
                     >
-                      <option value="">
-                        Selecione o equipamento
-                      </option>
+                      <option value="">Selecione o equipamento</option>
 
                       {equipment.map((equipamento) => (
                         <option key={equipamento} value={equipamento}>
@@ -212,9 +203,7 @@ function ContactPage() {
                     required
                     rows={6}
                     value={formData.mensagem}
-                    onChange={(e) =>
-                      handleChange("mensagem", e.target.value)
-                    }
+                    onChange={(e) => handleChange("mensagem", e.target.value)}
                     placeholder="Descreva sua necessidade e como podemos ajudar..."
                     className="w-full resize-none rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-[var(--kairos-orange)] focus:ring-1 focus:ring-[var(--kairos-orange)]"
                   />
@@ -242,7 +231,6 @@ function ContactPage() {
 
             {/* LADO DIREITO */}
             <div className="flex flex-col gap-5">
-
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 {contactCards.map((card) => {
                   const Icon = card.icon;
@@ -333,8 +321,7 @@ function FormField({
   return (
     <div>
       <label className="mb-2 block text-sm font-medium text-slate-700">
-        {label}{" "}
-        {required && <span className="text-orange-600">*</span>}
+        {label} {required && <span className="text-orange-600">*</span>}
       </label>
 
       <input
@@ -395,9 +382,7 @@ function InfoCard({ icon, title, type }: InfoCardProps) {
           {icon}
         </div>
 
-        <h3 className="font-semibold text-slate-800">
-          {title}
-        </h3>
+        <h3 className="font-semibold text-slate-800">{title}</h3>
       </div>
 
       <div className="text-sm leading-5 text-slate-500">
