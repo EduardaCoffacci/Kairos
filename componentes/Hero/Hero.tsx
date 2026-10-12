@@ -8,21 +8,22 @@ export default function Hero() {
       <div className="relative z-10 flex min-h-[calc(100vh-80px)] flex-col items-center px-4 pt-20 sm:px-6 lg:pt-24 xl:pt-28">
         {/* Título */}
 
-        <h1 className="text-center text-[20px] font-bold leading-[1.05] sm:text-[24px] md:text-[28px] lg:text-[36px] xl:text-[42px]">
-          CONVERTENDO BIOMASSA
-          <br />
-          EM ENERGIA LIMPA
-          <br />
-          DE FORMA{" "}
-          <span className="inline-block rounded-lg bg-white px-2 py-0 text-[#a7a4a4] shadow-lg sm:px-3 sm:py-0">
-            SUSTENTÁVEL
-          </span>
-        </h1>
+
+<h1 className="text-center text-[26px] font-bold leading-[1.05] sm:text-[30px] md:text-[36px] lg:text-[44px] xl:text-[66px]">
+  CONVERTENDO BIOMASSA
+  <br />
+  EM ENERGIA LIMPA
+  <br />
+  DE FORMA{" "}
+  <span className="inline-block rounded-lg bg-white px-2 py-0 text-[#e27713] shadow-lg sm:px-3 sm:py-0">
+    SUSTENTÁVEL
+  </span>
+</h1>
 
         {/* Descrição */}
         <p className="mx-auto mt-4 max-w-[700px] px-2 text-center text-[10px] leading-relaxed text-white sm:mt-5 sm:text-[12px] md:text-[14px] lg:mt-6 lg:text-[16px]">
-          Há mais de 15 anos, a Kairos Industria é referência na produção
-          de queimadores de cavaco para secagem de grãos.
+          Há mais de 15 anos, a Kairos Industria é referência na produção de
+          queimadores de cavaco para secagem de grãos.
         </p>
 
         {/* Botões */}
@@ -48,7 +49,7 @@ export default function Hero() {
             <div className="grid grid-cols-2 gap-x-8 gap-y-5 text-center sm:gap-x-12 md:grid-cols-4 md:gap-6">
               <div>
                 <strong className="text-[20px] font-bold sm:text-[32px] lg:text-[35px]">
-                  +17
+                  +15
                 </strong>
 
                 <p className="mt-1 text-[12px] uppercase sm:text-[14px] lg:text-[17px]">

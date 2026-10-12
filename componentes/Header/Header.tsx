@@ -123,7 +123,7 @@ const Header = ({ darkText = false }: HeaderProps) => {
 
         {/* Botão Desktop */}
         <div className="hidden w-[250px] justify-end lg:flex xl:w-[370px]">
-          <Button href="/contato">Solicitar Assistência Técnica</Button>
+          <Button href="/contato">Assistência Técnica</Button>
         </div>
 
         {/* Botão mobile */}
@@ -180,7 +180,7 @@ const Header = ({ darkText = false }: HeaderProps) => {
 
           <Link href="/contato">Contato</Link>
 
-          <Button href="/contato">Solicitar Assistência Técnica</Button>
+          <Button href="/contato"> Assistência Técnica</Button>
         </div>
       </nav>
     </header>
