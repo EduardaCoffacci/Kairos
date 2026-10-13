@@ -32,8 +32,8 @@ const Header = ({ darkText = false }: HeaderProps) => {
   return (
     <header
       className={`fixed left-0 top-0 z-50 w-full border-b backdrop-blur-xl transition-all duration-500 ${
-        isScrolled
-          ? "border-black/10 bg-white/90"
+        darkText || isScrolled
+          ? "border-black/10 bg-white"
           : "border-white/20 bg-transparent"
       }`}
     >
@@ -74,7 +74,6 @@ const Header = ({ darkText = false }: HeaderProps) => {
             Fornalhas
           </Link>
 
-         
           {/*
           <Link
             href="/clientes"

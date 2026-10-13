@@ -1,7 +1,9 @@
 "use client";
+import type { ReactNode } from "react";
+import Image from "next/image";
+
 
 import { useState } from "react";
-import type { ReactNode, SubmitEvent } from "react";
 import {
   ChevronDown,
   Clock,
@@ -11,6 +13,10 @@ import {
   Send,
   Wrench,
 } from "lucide-react";
+
+import { useForm, type UseFormRegisterReturn } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 import Header from "@/componentes/Header/Header";
 import Footer from "@/componentes/Footer/Footer";
@@ -49,16 +55,47 @@ const contactCards = [
     title: "Horário",
     icon: Clock,
   },
-];
+]as const;
 
-interface FormData {
-  nome: string;
-  email: string;
-  telefone: string;
-  empresa: string;
-  assunto: string;
-  mensagem: string;
-}
+// Regras de validação do formulário
+const contactSchema = z.object({
+  nome: z
+    .string()
+    .trim()
+    .min(3, "O nome deve ter no mínimo 3 caracteres.")
+    .max(100, "O nome deve ter no máximo 100 caracteres."),
+
+  email: z
+    .string()
+    .trim()
+    .min(1, "O e-mail é obrigatório.")
+    .email("Informe um e-mail válido.")
+    .max(254, "O e-mail é muito longo."),
+
+  telefone: z
+    .string()
+    .trim()
+    .min(8, "Informe um telefone válido.")
+    .max(20, "O telefone deve ter no máximo 20 caracteres."),
+
+  empresa: z
+    .string()
+    .trim()
+    .max(100, "A empresa deve ter no máximo 100 caracteres."),
+
+  assunto: z
+    .string()
+    .min(1, "Selecione um equipamento."),
+
+  mensagem: z
+    .string()
+    .trim()
+    .min(10, "A mensagem deve ter no mínimo 10 caracteres.")
+    .max(1000, "A mensagem deve ter no máximo 1000 caracteres."),
+});
+
+type FormData = z.infer<typeof contactSchema>;
+
 
 const initialFormData: FormData = {
   nome: "",
@@ -70,21 +107,26 @@ const initialFormData: FormData = {
 };
 
 function ContactPage() {
-  const [formData, setFormData] = useState<FormData>(initialFormData);
   const [mensagemSucesso, setMensagemSucesso] = useState("");
+  const [mensagemErro, setMensagemErro] = useState("");
   const [enviando, setEnviando] = useState(false);
 
-  const handleChange = (field: keyof FormData, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
+  
+const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<FormData>({
+    resolver: zodResolver(contactSchema),
+    defaultValues: initialFormData,
+    mode: "onBlur",
+    reValidateMode: "onChange",
+  });
 
-  const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
+const enviarFormulario = async (data: FormData) => {
     setMensagemSucesso("");
+    setMensagemErro("");
     setEnviando(true);
 
     try {
@@ -95,30 +137,60 @@ function ContactPage() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(data),
         },
       );
 
       if (!resposta.ok) {
-        throw new Error("Erro ao enviar formulário");
+        throw new Error("Não foi possível enviar a mensagem.");
       }
 
-      setFormData(initialFormData);
+      reset(initialFormData);
       setMensagemSucesso("Mensagem enviada com sucesso!");
     } catch (error) {
       console.error("Erro ao enviar formulário:", error);
+      setMensagemErro(
+        "Não foi possível enviar sua mensagem. Tente novamente.",
+      );
     } finally {
       setEnviando(false);
     }
   };
 
-  return (
+   return (
     <>
       <Header darkText />
 
-      <section className="w-full bg-slate-50 pb-10 pt-[80px] sm:pb-14 sm:pt-[90px] lg:pb-16 lg:pt-[110px] xl:pt-[180px]">
+      {/* BANNER */}
+      <section className="relative mt-[80px] h-[200px] w-full overflow-hidden sm:h-[230px] lg:h-[250px]">
+        <Image
+          src="/campo.jpg"
+          alt="Campo agrícola"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-[center_35%]"
+        />
+
+        <div className="absolute inset-0 bg-black/55" />
+
+        <div className="relative z-10 flex h-full flex-col items-center justify-center px-5 text-center">
+          <h1 className="mb-2 text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl">
+            Entre em Contato
+          </h1>
+
+          <p className="max-w-xl text-sm leading-6 text-white/90 sm:text-base">
+            Estamos prontos para entender suas necessidades e oferecer
+            soluções industriais para o seu projeto.
+          </p>
+        </div>
+      </section>
+
+      {/* FORMULÁRIO E INFORMAÇÕES */}
+      <section className="w-full bg-slate-50 pb-10 pt-10 sm:pb-14 sm:pt-12 lg:pb-16 lg:pt-14">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.1fr_1fr]">
+
             {/* FORMULÁRIO */}
             <div className="rounded-xl bg-white p-5 shadow-sm sm:p-7 lg:p-8">
               <div className="mb-7 flex items-center gap-3">
@@ -129,23 +201,27 @@ function ContactPage() {
                 </h2>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form
+                onSubmit={handleSubmit(enviarFormulario)}
+                noValidate
+                className="space-y-5"
+              >
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   <FormField
                     label="Nome completo"
                     required
-                    value={formData.nome}
+                    registration={register("nome")}
+                    error={errors.nome?.message}
                     placeholder="Digite seu nome"
-                    onChange={(value) => handleChange("nome", value)}
                   />
 
                   <FormField
                     label="E-mail"
                     required
                     type="email"
-                    value={formData.email}
+                    registration={register("email")}
+                    error={errors.email?.message}
                     placeholder="seu@email.com"
-                    onChange={(value) => handleChange("email", value)}
                   />
                 </div>
 
@@ -154,31 +230,38 @@ function ContactPage() {
                     label="Telefone"
                     required
                     type="tel"
-                    value={formData.telefone}
+                    registration={register("telefone")}
+                    error={errors.telefone?.message}
                     placeholder="(00) 00000-0000"
-                    onChange={(value) => handleChange("telefone", value)}
                   />
 
                   <FormField
                     label="Empresa"
-                    value={formData.empresa}
+                    registration={register("empresa")}
+                    error={errors.empresa?.message}
                     placeholder="Nome da empresa"
-                    onChange={(value) => handleChange("empresa", value)}
                   />
                 </div>
 
                 {/* ASSUNTO */}
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                  <label
+                    htmlFor="assunto"
+                    className="mb-2 block text-sm font-medium text-slate-700"
+                  >
                     Assunto <span className="text-orange-600">*</span>
                   </label>
 
                   <div className="relative">
                     <select
-                      required
-                      value={formData.assunto}
-                      onChange={(e) => handleChange("assunto", e.target.value)}
-                      className="w-full appearance-none rounded-md border border-slate-300 bg-slate-50 px-3 py-3 pr-10 text-sm text-slate-600 outline-none transition focus:border-[var(--kairos-orange)] focus:ring-1 focus:ring-[var(--kairos-orange)]"
+                      id="assunto"
+                      {...register("assunto")}
+                      aria-invalid={!!errors.assunto}
+                      className={`w-full appearance-none rounded-md border bg-slate-50 px-3 py-3 pr-10 text-sm outline-none transition focus:border-[var(--kairos-orange)] focus:ring-1 focus:ring-[var(--kairos-orange)] ${
+                        errors.assunto
+                          ? "border-red-500 text-slate-600"
+                          : "border-slate-300 text-slate-600"
+                      }`}
                     >
                       <option value="">Selecione o equipamento</option>
 
@@ -191,32 +274,64 @@ function ContactPage() {
 
                     <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                   </div>
+
+                  {errors.assunto && (
+                    <p className="mt-1.5 text-sm text-red-600">
+                      {errors.assunto.message}
+                    </p>
+                  )}
                 </div>
 
                 {/* MENSAGEM */}
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                  <label
+                    htmlFor="mensagem"
+                    className="mb-2 block text-sm font-medium text-slate-700"
+                  >
                     Mensagem <span className="text-orange-600">*</span>
                   </label>
 
                   <textarea
-                    required
+                    id="mensagem"
                     rows={6}
-                    value={formData.mensagem}
-                    onChange={(e) => handleChange("mensagem", e.target.value)}
+                    {...register("mensagem")}
+                    aria-invalid={!!errors.mensagem}
                     placeholder="Descreva sua necessidade e como podemos ajudar..."
-                    className="w-full resize-none rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-[var(--kairos-orange)] focus:ring-1 focus:ring-[var(--kairos-orange)]"
+                    className={`w-full resize-none rounded-md border bg-slate-50 px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-[var(--kairos-orange)] focus:ring-1 focus:ring-[var(--kairos-orange)] ${
+                      errors.mensagem
+                        ? "border-red-500"
+                        : "border-slate-300"
+                    }`}
                   />
+
+                  {errors.mensagem && (
+                    <p className="mt-1.5 text-sm text-red-600">
+                      {errors.mensagem.message}
+                    </p>
+                  )}
                 </div>
 
+                {/* MENSAGENS DE RETORNO */}
                 {mensagemSucesso && (
-                  <div className="flex items-center gap-3 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+                  <div
+                    role="status"
+                    className="flex items-center gap-3 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700"
+                  >
                     <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-100">
                       ✓
                     </div>
 
                     <span>{mensagemSucesso}</span>
                   </div>
+                )}
+
+                {mensagemErro && (
+                  <p
+                    role="alert"
+                    className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                  >
+                    {mensagemErro}
+                  </p>
                 )}
 
                 <button
@@ -263,11 +378,17 @@ function ContactPage() {
                 </p>
 
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <button className="rounded-md bg-white px-4 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-100">
+                  <button
+                    type="button"
+                    className="rounded-md bg-white px-4 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-100"
+                  >
                     Suporte Técnico
                   </button>
 
-                  <button className="rounded-md bg-white px-4 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-100">
+                  <button
+                    type="button"
+                    className="rounded-md bg-white px-4 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-100"
+                  >
                     Ligar Agora
                   </button>
                 </div>
@@ -285,7 +406,10 @@ function ContactPage() {
                   distribuidores.
                 </p>
 
-                <button className="w-full rounded-md border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-50">
+                <button
+                  type="button"
+                  className="w-full rounded-md border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+                >
                   Seja um Parceiro
                 </button>
               </div>
@@ -299,49 +423,61 @@ function ContactPage() {
   );
 }
 
+
 /* CAMPO DO FORMULÁRIO */
 
 interface FormFieldProps {
   label: string;
-  value: string;
+  registration: UseFormRegisterReturn;
+  error?: string;
   placeholder: string;
-  onChange: (value: string) => void;
   type?: string;
   required?: boolean;
 }
 
 function FormField({
   label,
-  value,
+  registration,
+  error,
   placeholder,
-  onChange,
   type = "text",
   required = false,
 }: FormFieldProps) {
   return (
     <div>
       <label className="mb-2 block text-sm font-medium text-slate-700">
-        {label} {required && <span className="text-orange-600">*</span>}
+        {label}{" "}
+        {required && <span className="text-orange-600">*</span>}
       </label>
 
       <input
-        required={required}
+        {...registration}
         type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
+        required={required}
+        aria-invalid={!!error}
         placeholder={placeholder}
-        className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-[var(--kairos-orange)] focus:ring-1 focus:ring-[var(--kairos-orange)]"
+        className={`w-full rounded-md border bg-slate-50 px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-[var(--kairos-orange)] focus:ring-1 focus:ring-[var(--kairos-orange)] ${
+          error ? "border-red-500" : "border-slate-300"
+        }`}
       />
+
+      {error && (
+        <p className="mt-1.5 text-sm text-red-600">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
 
+
 /* CARD DE INFORMAÇÃO */
+
 
 interface InfoCardProps {
   icon: ReactNode;
   title: string;
-  type: string;
+  type: "address" | "phone" | "email" | "hours";
 }
 
 function InfoCard({ icon, title, type }: InfoCardProps) {
@@ -386,10 +522,9 @@ function InfoCard({ icon, title, type }: InfoCardProps) {
       </div>
 
       <div className="text-sm leading-5 text-slate-500">
-        {content[type as keyof typeof content]}
+        {content[type]}
       </div>
     </div>
   );
 }
-
 export default ContactPage;
