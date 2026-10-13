@@ -206,12 +206,12 @@ export default function FornalhasPage() {
 
         {/* DESTAQUE VISUAL */}
         <section className="relative overflow-hidden py-28">
-          {/* <Image
-          src=""
-          alt="Processo industrial"
-          fill
-          className="object-cover"
-        /> Imagem de fundo */}
+          <Image
+            src="/campo.jpg"
+            alt="Processo industrial"
+            fill
+            className="object-cover"
+          />
 
           <div className="absolute inset-0 bg-black/75" />
 
