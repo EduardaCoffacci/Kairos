@@ -1,12 +1,8 @@
-import React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import {
-  FaFacebook,
-  FaInstagram,
+  FaLinkedin,
   FaPhone,
   FaEnvelope,
-  FaLinkedin,
   FaMapMarkerAlt,
 } from "react-icons/fa";
 
@@ -58,10 +54,10 @@ export default function Footer() {
               </Link>
 
               <Link
-                href="/sobre"
+                href="/nossahistoria"
                 className="text-white/80 transition hover:text-[var(--kairos-orange)]"
               >
-                Sobre Nós
+                Nossa História
               </Link>
 
               <Link
@@ -79,35 +75,35 @@ export default function Footer() {
 
             <nav className="mt-5 flex flex-col gap-4">
               <Link
-                href="/produtos/caldeiras"
+                href="/fornalhas"
                 className="text-white/80 transition hover:text-[var(--kairos-orange)]"
               >
                 Fornalhas de Biomassa
               </Link>
 
               <Link
-                href="/produtos/rti"
+                href="/produtos"
                 className="text-white/80 transition hover:text-[var(--kairos-orange)]"
               >
                 RTI - Grelhas Móveis
               </Link>
 
               <Link
-                href="/produtos/rtmv"
+                href="/produtos"
                 className="text-white/80 transition hover:text-[var(--kairos-orange)]"
               >
                 RTMV - Grelhas Móveis
               </Link>
 
               <Link
-                href="/produtos/rtm"
+                href="/produtos"
                 className="text-white/80 transition hover:text-[var(--kairos-orange)]"
               >
                 RTM - Grelhas Fixas Modulares
               </Link>
 
               <Link
-                href="/produtos/rta"
+                href="/produtos"
                 className="text-white/80 transition hover:text-[var(--kairos-orange)]"
               >
                 RTA - Grelhas Fixas
@@ -120,7 +116,6 @@ export default function Footer() {
             <h3 className="text-xl font-bold">Contato</h3>
 
             <div className="mt-5 space-y-5">
-              {/* ENDEREÇO */}
               <div className="flex gap-4">
                 <FaMapMarkerAlt
                   className="mt-1 shrink-0 text-[var(--kairos-orange)]"
@@ -128,12 +123,10 @@ export default function Footer() {
                 />
 
                 <p className="text-sm leading-6 text-white/80 sm:text-base">
-                  {/*Rua , N° - Bairro,*/}
                   Navegantes - SC
                 </p>
               </div>
 
-              {/* TELEFONES */}
               <div className="flex gap-4">
                 <FaPhone
                   className="mt-1 shrink-0 text-[var(--kairos-orange)]"
@@ -145,7 +138,6 @@ export default function Footer() {
                 </div>
               </div>
 
-              {/* EMAIL */}
               <div className="flex gap-4">
                 <FaEnvelope
                   className="mt-1 shrink-0 text-[var(--kairos-orange)]"
@@ -165,27 +157,14 @@ export default function Footer() {
 
         {/* PARTE INFERIOR */}
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-          {/* COPYRIGHT */}
           <p className="text-sm text-white/80 sm:text-base">
             © 2026 Kairos. Desenvolvido por Maria Tecnologia. Todos os direitos
             reservados.
           </p>
 
-          {/* LINKS */}
+          {/* LINKS LEGAIS */}
           <div className="flex flex-wrap gap-6 text-sm text-white/80 sm:text-base">
-            <Link
-              href="/politica-de-privacidade"
-              className="transition hover:text-[var(--kairos-orange)]"
-            >
-              Política de Privacidade
-            </Link>
-
-            <Link
-              href="/termos-de-uso"
-              className="transition hover:text-[var(--kairos-orange)]"
-            >
-              Termos de Uso
-            </Link>
+            {/* Removidos até que as páginas sejam implementadas */}
           </div>
         </div>
       </div>
