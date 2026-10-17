@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+import Chat from "../Chat/Chat";
 
 export default function Hero() {
   return (
@@ -93,36 +94,7 @@ export default function Hero() {
 
       {/* Atendimento */}
 
-      <div className="fixed bottom-4 right-4 z-50 sm:bottom-6 sm:right-6 lg:bottom-7 lg:right-7">
-        <div className="relative">
-          {/* Balão */}
-          <div className="absolute -top-12 right-0 whitespace-nowrap rounded-2xl bg-white px-3 py-2 text-[13px] font-semibold text-gray-800 shadow-lg sm:-top-14 sm:px-4 sm:py-3 sm:text-[14px] lg:-top-16 lg:px-5 lg:py-4 lg:text-[16px]">
-            Posso ajudar?
-            <div className="absolute bottom-[-10px] right-5 h-0 w-0 border-l-[10px] border-r-[10px] border-t-[12px] border-l-transparent border-r-transparent border-t-white" />
-          </div>
-
-          {/* Atendente */}
-          <a
-            href="https://wa.me/5547992187965"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="relative flex h-[58px] w-[58px] animate-float items-center justify-center sm:h-[65px] sm:w-[65px] lg:h-[75px] lg:w-[75px]"
-          >
-            {/* Atendente */}
-            <div className="relative h-full w-full sombra-abrindo overflow-hidden rounded-full border-4 border-white bg-[var(--kairos-orange)]">
-              <Image
-                src="/atendente.jpg"
-                alt="Atendimento pelo WhatsApp"
-                fill
-                className="object-cover"
-              />
-            </div>
-          </a>
-
-          {/* Status */}
-          <span className="absolute bottom-2 right-2 h-3 w-3 rounded-full border-2 border-white bg-green-500 sm:h-4 sm:w-4" />
-        </div>
-      </div>
+      <Chat />
     </section>
   );
 }
