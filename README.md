@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Kairos Industrial
 
-## Getting Started
+Desenvolvimento de uma aplicação web institucional para a **Kairos Industrial**, com foco na apresentação de produtos e soluções da empresa, experiência do usuário e funcionalidades de atendimento digital.
 
-First, run the development server:
+O projeto envolve desenvolvimento frontend e backend, integração com API, persistência de dados e comunicação em tempo real.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Tecnologias utilizadas
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**Frontend**
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- React Hook Form
+- Zod
+- Socket.IO Client
+- Lucide React
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**Backend**
+- Node.js
+- NestJS
+- TypeScript
+- MongoDB
+- Mongoose
+- Socket.IO
+- JWT
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**Ferramentas e conceitos**
+- Git e GitHub
+- API REST
+- WebSockets
+- Validação de dados
+- Autenticação e autorização
+- Variáveis de ambiente
+- Deploy de aplicação
 
-## Learn More
+## Funcionalidades desenvolvidas
 
-To learn more about Next.js, take a look at the following resources:
+- Site institucional responsivo
+- Páginas para apresentação de produtos, clientes e informações da empresa
+- Formulário de contato com validação
+- Integração entre frontend e backend
+- Sistema de atendimento por chat em tempo real
+- Envio e recebimento de mensagens
+- Armazenamento e histórico de conversas
+- Painel administrativo para gerenciamento dos atendimentos
+- Controle de mensagens não lidas
+- Gerenciamento do status das conversas
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Arquitetura da aplicação
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+A aplicação utiliza uma arquitetura separada entre frontend e backend, permitindo organizar as responsabilidades de interface, regras de negócio, comunicação e persistência de dados.
 
-## Deploy on Vercel
+- **Frontend:** Next.js, React e TypeScript
+- **Backend:** NestJS e Node.js
+- **Banco de dados:** MongoDB
+- **Comunicação em tempo real:** Socket.IO
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Objetivo do projeto
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Este projeto representa a aplicação prática de conhecimentos de desenvolvimento backend em um contexto empresarial, abrangendo APIs, persistência de dados, autenticação, validação de requisições e comunicação em tempo real.
+
+O desenvolvimento contribui para a experiência com arquitetura backend, integração entre sistemas e construção de funcionalidades voltadas às necessidades de uma aplicação web real.
