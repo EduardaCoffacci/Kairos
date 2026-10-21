@@ -1,11 +1,12 @@
-
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Conversation = {
   _id: string;
   visitorId: string;
+  name: string;
   status: "open" | "closed";
   createdAt: string;
   updatedAt: string;
@@ -24,6 +25,8 @@ type UnreadCount = {
   count: number;
 };
 
+type ConversationFilter = "all" | "open" | "closed" | "unread";
+
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ??
   (process.env.NODE_ENV === "development" ? "http://localhost:3001" : "");
@@ -31,12 +34,10 @@ const API_URL =
 const REFRESH_INTERVAL = 5000;
 
 export default function ChatAdminPage() {
+  const router = useRouter();
+
   const [authChecked, setAuthChecked] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [loginLoading, setLoginLoading] = useState(false);
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] =
@@ -44,6 +45,9 @@ export default function ChatAdminPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [message, setMessage] = useState("");
+
+  const [conversationFilter, setConversationFilter] =
+    useState<ConversationFilter>("all");
 
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
@@ -64,7 +68,7 @@ export default function ChatAdminPage() {
 
     async function checkSession() {
       try {
-        // Remove somente o token antigo. O novo JWT não fica no navegador.
+        // Remove somente o token antigo. O JWT atual não fica no localStorage.
         window.localStorage.removeItem("kairos_admin_token");
 
         const response = await fetch(`${API_URL}/auth/me`, {
@@ -94,6 +98,13 @@ export default function ChatAdminPage() {
     };
   }, []);
 
+  // Sem sessão válida, encaminha para a página de login.
+  useEffect(() => {
+    if (authChecked && !isAuthenticated) {
+      router.replace("/adm/login");
+    }
+  }, [authChecked, isAuthenticated, router]);
+
   // Limpa os dados privados do painel.
   const clearAdminData = useCallback(() => {
     requestIdRef.current += 1;
@@ -104,6 +115,8 @@ export default function ChatAdminPage() {
     setMessages([]);
     setUnreadCounts({});
     setMessage("");
+
+    setConversationFilter("all");
     setLoadingMessages(false);
     setSending(false);
     setClosingConversation(false);
@@ -133,9 +146,7 @@ export default function ChatAdminPage() {
       }
 
       if (response.status === 403) {
-        throw new Error(
-          "Você não tem permissão para acessar este recurso.",
-        );
+        throw new Error("Você não tem permissão para acessar este recurso.");
       }
 
       return response;
@@ -143,75 +154,27 @@ export default function ChatAdminPage() {
     [clearAdminData],
   );
 
-  // Login: o servidor define o cookie HttpOnly.
-  async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    setLoginLoading(true);
-    setError("");
-
-    try {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ username, password }),
-      });
-
-      if (!response.ok) {
-        throw new Error(
-          response.status === 401
-            ? "Usuário ou senha inválidos."
-            : "Não foi possível entrar. Tente novamente.",
-        );
-      }
-
-      // Confirma que o cookie foi recebido e que a sessão é válida.
-      const sessionResponse = await fetch(`${API_URL}/auth/me`, {
-        method: "GET",
-        credentials: "include",
-      });
-
-      if (!sessionResponse.ok) {
-        throw new Error(
-          "Login recebido, mas não foi possível validar a sessão. Verifique a configuração dos cookies.",
-        );
-      }
-
-      setIsAuthenticated(true);
-      setPassword("");
-      setError("");
-      setLoadingConversations(true);
-    } catch (err) {
-      setIsAuthenticated(false);
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Erro ao realizar login.",
-      );
-    } finally {
-      setLoginLoading(false);
-    }
-  }
-
   // Logout no servidor e limpeza do estado local.
   async function handleLogout() {
     try {
-      await fetch(`${API_URL}/auth/logout`, {
+      const response = await fetch(`${API_URL}/auth/logout`, {
         method: "POST",
         credentials: "include",
       });
+
+      if (!response.ok) {
+        console.error("O servidor não confirmou o encerramento da sessão.");
+      }
     } catch (err) {
       console.error("Erro ao encerrar sessão no servidor:", err);
     } finally {
       setIsAuthenticated(false);
-      setPassword("");
       setError("");
       setAuthChecked(true);
       setLoadingConversations(false);
       clearAdminData();
+
+      router.replace("/adm/login");
     }
   }
 
@@ -255,11 +218,12 @@ export default function ChatAdminPage() {
 
       data.sort(
         (a, b) =>
-          new Date(b.updatedAt).getTime() -
-          new Date(a.updatedAt).getTime(),
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
       );
 
       setConversations(data);
+
+      // Remove seleções de conversas que não existem mais na resposta.
 
       const selected = selectedConversationRef.current;
 
@@ -325,8 +289,7 @@ export default function ChatAdminPage() {
 
         return [...byId.values()].sort(
           (a, b) =>
-            new Date(a.createdAt).getTime() -
-            new Date(b.createdAt).getTime(),
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
         );
       });
     },
@@ -347,17 +310,16 @@ export default function ChatAdminPage() {
       const selected = selectedConversationRef.current;
 
       if (selected) {
-        void refreshSelectedMessages(
-          selected._id,
-          requestIdRef.current,
-        ).catch((err) => {
-          if (
-            err instanceof Error &&
-            err.message !== "Sessão inválida ou expirada."
-          ) {
-            console.error("Erro ao atualizar mensagens:", err);
-          }
-        });
+        void refreshSelectedMessages(selected._id, requestIdRef.current).catch(
+          (err) => {
+            if (
+              err instanceof Error &&
+              err.message !== "Sessão inválida ou expirada."
+            ) {
+              console.error("Erro ao atualizar mensagens:", err);
+            }
+          },
+        );
       }
     }, REFRESH_INTERVAL);
 
@@ -410,11 +372,7 @@ export default function ChatAdminPage() {
         }
       }
     },
-    [
-      authenticatedFetch,
-      refreshSelectedMessages,
-      refreshUnreadCounts,
-    ],
+    [authenticatedFetch, refreshSelectedMessages, refreshUnreadCounts],
   );
 
   // Envia mensagens do administrador pela rota HTTP autenticada.
@@ -450,10 +408,7 @@ export default function ChatAdminPage() {
 
       setMessage("");
 
-      await refreshSelectedMessages(
-        conversation._id,
-        requestIdRef.current,
-      );
+      await refreshSelectedMessages(conversation._id, requestIdRef.current);
 
       await refreshConversations();
     } catch (err) {
@@ -513,90 +468,63 @@ export default function ChatAdminPage() {
     }
   }
 
+  // Contadores calculados a partir dos dados existentes.
   const totalUnread = Object.values(unreadCounts).reduce(
     (total, count) => total + count,
     0,
   );
 
-  if (!authChecked) {
+  const openCount = conversations.filter(
+    (conversation) => conversation.status === "open",
+  ).length;
+
+  const closedCount = conversations.filter(
+    (conversation) => conversation.status === "closed",
+  ).length;
+
+  const unreadConversationCount = Object.values(unreadCounts).filter(
+    (count) => count > 0,
+  ).length;
+
+  const filteredConversations = conversations.filter((conversation) => {
+    if (conversationFilter === "open") {
+      return conversation.status === "open";
+    }
+
+    if (conversationFilter === "closed") {
+      return conversation.status === "closed";
+    }
+
+    if (conversationFilter === "unread") {
+      return (unreadCounts[conversation._id] ?? 0) > 0;
+    }
+
+    return true;
+  });
+
+  // O painel só é renderizado depois da verificação da sessão.
+  if (!authChecked || !isAuthenticated) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-black text-white">
-        Verificando sessão...
-      </main>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-black p-6 text-white">
-        <form
-          onSubmit={handleLogin}
-          className="w-full max-w-md space-y-5 rounded-xl border border-white/10 bg-zinc-950 p-8"
-        >
-          <div>
-            <h1 className="text-2xl font-semibold">Kairos Atendimento</h1>
-            <p className="mt-2 text-sm text-zinc-400">
-              Entre com sua conta administrativa.
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="username" className="text-sm text-zinc-300">
-              Usuário
-            </label>
-            <input
-              id="username"
-              autoComplete="username"
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-              required
-              className="w-full rounded-lg border border-white/10 bg-zinc-900 px-4 py-3 outline-none focus:border-[#e04f11]"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="password" className="text-sm text-zinc-300">
-              Senha
-            </label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-              className="w-full rounded-lg border border-white/10 bg-zinc-900 px-4 py-3 outline-none focus:border-[#e04f11]"
-            />
-          </div>
-
-          {error && (
-            <p role="alert" className="text-sm text-red-400">
-              {error}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={loginLoading}
-            className="w-full rounded-lg bg-[#e04f11] px-4 py-3 font-medium hover:opacity-90 disabled:opacity-50"
-          >
-            {loginLoading ? "Entrando..." : "Entrar"}
-          </button>
-        </form>
+        <p className="text-sm text-zinc-400">
+          {!authChecked
+            ? "Verificando sessão..."
+            : "Redirecionando para o login..."}
+        </p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-black p-6 text-white">
-      <div className="mx-auto flex h-[calc(100vh-48px)] max-w-7xl overflow-hidden rounded-xl border border-white/10 bg-zinc-950">
-        <aside className="w-80 shrink-0 overflow-y-auto border-r border-white/10">
+    <main className="min-h-screen bg-black p-3 text-white sm:p-6">
+      <div className="mx-auto flex h-[calc(100vh-24px)] max-w-7xl overflow-hidden rounded-xl border border-white/10 bg-zinc-950 sm:h-[calc(100vh-48px)]">
+        <aside className="flex w-72 shrink-0 flex-col overflow-hidden border-r border-white/10 sm:w-80">
           <div className="border-b border-white/10 p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h1 className="text-xl font-semibold">Kairos Atendimento</h1>
                 <p className="mt-1 text-sm text-zinc-400">
-                  Conversas ({conversations.length})
+                  Central de conversas
                 </p>
               </div>
 
@@ -609,83 +537,143 @@ export default function ChatAdminPage() {
               </button>
             </div>
 
-            <p className="mt-2 text-xs text-zinc-500">
-              Atualização a cada 5 segundos
-            </p>
-
             {totalUnread > 0 && (
-              <p className="mt-2 text-sm font-medium text-[#e04f11]">
+              <p className="mt-3 text-sm font-medium text-[#e04f11]">
                 {totalUnread} mensagem(ns) não lida(s)
               </p>
             )}
           </div>
 
-          <div className="space-y-2 p-3">
+          <div className="grid grid-cols-2 gap-2 border-b border-white/10 p-3">
+            {[
+              {
+                id: "all",
+                label: "Todas",
+                count: conversations.length,
+              },
+              {
+                id: "open",
+                label: "Abertas",
+                count: openCount,
+              },
+              {
+                id: "closed",
+                label: "Fechadas",
+                count: closedCount,
+              },
+              {
+                id: "unread",
+                label: "Não lidas",
+                count: unreadConversationCount,
+              },
+            ].map((filter) => (
+              <button
+                key={filter.id}
+                type="button"
+                onClick={() =>
+                  setConversationFilter(filter.id as ConversationFilter)
+                }
+                aria-pressed={conversationFilter === filter.id}
+                className={`flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm transition ${
+                  conversationFilter === filter.id
+                    ? "bg-[#e04f11]/20 text-white ring-1 ring-[#e04f11]/50"
+                    : "bg-white/5 text-zinc-300 hover:bg-white/10"
+                }`}
+              >
+                <span>{filter.label}</span>
+                <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs">
+                  {filter.count}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div className="flex-1 space-y-2 overflow-y-auto p-3">
             {loadingConversations && (
               <p className="p-3 text-sm text-zinc-400">
                 Carregando conversas...
               </p>
             )}
 
-            {!loadingConversations && conversations.length === 0 && (
+            {!loadingConversations && filteredConversations.length === 0 && (
               <p className="p-3 text-sm text-zinc-400">
-                Nenhuma conversa encontrada.
+                {conversations.length === 0
+                  ? "Nenhuma conversa encontrada."
+                  : "Nenhuma conversa corresponde a este filtro."}
               </p>
             )}
 
-            {conversations.map((conversation) => {
+            {filteredConversations.map((conversation) => {
               const unread = unreadCounts[conversation._id] ?? 0;
-              const isSelected =
-                selectedConversation?._id === conversation._id;
+              const isSelected = selectedConversation?._id === conversation._id;
 
               return (
-                <button
+                <div
                   key={conversation._id}
-                  type="button"
-                  onClick={() => void selectConversation(conversation)}
-                  className={`w-full rounded-lg p-4 text-left transition ${
+                  className={`rounded-lg border transition ${
                     isSelected
-                      ? "bg-[#e04f11]/20 ring-1 ring-[#e04f11]/50"
-                      : "bg-white/5 hover:bg-white/10"
+                      ? "border-[#e04f11]/60 bg-[#e04f11]/10"
+                      : "border-transparent bg-white/5 hover:bg-white/10"
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="min-w-0 truncate font-medium">
-                      {conversation.visitorId}
-                    </p>
+                  <div className="flex items-start gap-2 p-3">
+                    <button
+                      type="button"
+                      onClick={() => void selectConversation(conversation)}
+                      className="min-w-0 flex-1 text-left"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="min-w-0 truncate font-medium">
+                          {conversation.name || "Cliente"}
+                        </p>
 
-                    {unread > 0 && (
-                      <span className="flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full bg-[#e04f11] px-2 text-xs font-bold">
-                        {unread > 99 ? "99+" : unread}
-                      </span>
-                    )}
+                        {unread > 0 && (
+                          <span className="flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full bg-[#e04f11] px-2 text-xs font-bold">
+                            {unread > 99 ? "99+" : unread}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="mt-2 flex items-center gap-2">
+                        <span
+                          className={`inline-block h-2 w-2 rounded-full ${
+                            conversation.status === "open"
+                              ? "bg-emerald-400"
+                              : "bg-zinc-500"
+                          }`}
+                        />
+
+                        <span className="text-xs text-zinc-400">
+                          {conversation.status === "open"
+                            ? "Aberta"
+                            : "Fechada"}
+                        </span>
+                      </div>
+
+                      <p className="mt-2 text-xs text-zinc-500">
+                        Atualizada às{" "}
+                        {new Date(conversation.updatedAt).toLocaleTimeString(
+                          "pt-BR",
+                          {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          },
+                        )}
+                      </p>
+                    </button>
                   </div>
-
-                  <p className="mt-1 text-sm text-zinc-400">
-                    {conversation.status === "open"
-                      ? "Conversa aberta"
-                      : "Conversa encerrada"}
-                  </p>
-
-                  <p className="mt-1 text-xs text-zinc-500">
-                    Atualizada às{" "}
-                    {new Date(conversation.updatedAt).toLocaleTimeString(
-                      "pt-BR",
-                      { hour: "2-digit", minute: "2-digit" },
-                    )}
-                  </p>
-                </button>
+                </div>
               );
             })}
           </div>
         </aside>
 
         <section className="flex min-w-0 flex-1 flex-col">
-          <header className="flex items-center justify-between gap-4 border-b border-white/10 p-5">
+          <header className="flex items-center justify-between gap-4 border-b border-white/10 p-4 sm:p-5">
             <div className="min-w-0">
               <h2 className="truncate font-semibold">
                 {selectedConversation
-                  ? selectedConversation.visitorId
+                  ? selectedConversation.name
                   : "Painel de atendimento"}
               </h2>
 
@@ -703,33 +691,49 @@ export default function ChatAdminPage() {
                 type="button"
                 onClick={() => void closeConversation()}
                 disabled={closingConversation || sending}
-                className="shrink-0 rounded-lg border border-red-500/40 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/10 disabled:opacity-50"
+                className="shrink-0 rounded-lg border border-red-500/40 px-3 py-2 text-sm font-medium text-red-400 hover:bg-red-500/10 disabled:opacity-50 sm:px-4"
               >
-                {closingConversation ? "Encerrando..." : "Encerrar conversa"}
+                {closingConversation ? "Encerrando..." : "Encerrar"}
               </button>
             )}
           </header>
 
-          <div className="flex-1 space-y-4 overflow-y-auto p-6">
+          <div className="flex-1 space-y-4 overflow-y-auto p-4 sm:p-6">
             {!selectedConversation && (
               <div className="flex h-full items-center justify-center">
-                <p className="text-center text-zinc-500">
-                  Selecione uma conversa na coluna esquerda.
-                </p>
+                <div className="text-center">
+                  <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-white/5">
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      className="h-7 w-7 text-zinc-400"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M8 10h8M8 14h5m-7 6-3 1 1-4a8 8 0 1 1 3 3Z"
+                      />
+                    </svg>
+                  </div>
+
+                  <p className="text-center text-zinc-500">
+                    Selecione uma conversa na coluna esquerda.
+                  </p>
+                </div>
               </div>
             )}
 
             {loadingMessages && (
-              <p className="text-sm text-zinc-400">
-                Carregando mensagens...
-              </p>
+              <p className="text-sm text-zinc-400">Carregando mensagens...</p>
             )}
 
             {selectedConversation &&
               !loadingMessages &&
               messages.filter(
-                (item) =>
-                  item.conversationId === selectedConversation._id,
+                (item) => item.conversationId === selectedConversation._id,
               ).length === 0 && (
                 <p className="text-sm text-zinc-400">
                   Nenhuma mensagem nesta conversa.
@@ -739,16 +743,13 @@ export default function ChatAdminPage() {
             {!loadingMessages &&
               messages
                 .filter(
-                  (item) =>
-                    item.conversationId === selectedConversation?._id,
+                  (item) => item.conversationId === selectedConversation?._id,
                 )
                 .map((item) => (
                   <div
                     key={item._id}
                     className={`flex ${
-                      item.sender === "admin"
-                        ? "justify-end"
-                        : "justify-start"
+                      item.sender === "admin" ? "justify-end" : "justify-start"
                     }`}
                   >
                     <div
@@ -759,7 +760,9 @@ export default function ChatAdminPage() {
                       }`}
                     >
                       <p className="mb-1 text-xs opacity-70">
-                        {item.sender === "admin" ? "Atendente" : "Visitante"}
+                        {item.sender === "admin"
+                          ? "Atendente"
+                          : (selectedConversation?.name ?? "Cliente")}
                       </p>
 
                       <p className="whitespace-pre-wrap break-words text-sm">
@@ -767,13 +770,10 @@ export default function ChatAdminPage() {
                       </p>
 
                       <p className="mt-2 text-right text-xs opacity-60">
-                        {new Date(item.createdAt).toLocaleTimeString(
-                          "pt-BR",
-                          {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          },
-                        )}
+                        {new Date(item.createdAt).toLocaleTimeString("pt-BR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </p>
                     </div>
                   </div>
@@ -798,7 +798,7 @@ export default function ChatAdminPage() {
             </div>
           )}
 
-          <div className="border-t border-white/10 p-4">
+          <div className="border-t border-white/10 p-3 sm:p-4">
             <form
               className="flex gap-3"
               onSubmit={(event) => {
@@ -835,7 +835,7 @@ export default function ChatAdminPage() {
                   sending ||
                   closingConversation
                 }
-                className="rounded-lg bg-[#e04f11] px-6 py-3 font-medium hover:opacity-90 disabled:opacity-50"
+                className="rounded-lg bg-[#e04f11] px-4 py-3 font-medium hover:opacity-90 disabled:opacity-50 sm:px-6"
               >
                 {sending ? "Enviando..." : "Enviar"}
               </button>

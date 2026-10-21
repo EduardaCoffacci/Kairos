@@ -7,6 +7,7 @@ import { io, type Socket } from "socket.io-client";
 type Conversation = {
   _id: string;
   visitorId: string;
+  name: string;
   status: "open" | "closed";
 };
 
@@ -55,6 +56,7 @@ export default function AtendenteWhatsApp() {
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
+  const [visitorName, setVisitorName] = useState("");
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [startingNewConversation, setStartingNewConversation] = useState(false);
@@ -75,7 +77,8 @@ export default function AtendenteWhatsApp() {
     });
   }, []);
 
-  // Cria ou recupera a conversa do visitante.
+  // Recupera uma conversa existente, se houver.
+  // Se não houver, aguarda o visitante informar o nome.
   useEffect(() => {
     let cancelled = false;
 
@@ -92,13 +95,12 @@ export default function AtendenteWhatsApp() {
           localStorage.setItem(VISITOR_STORAGE_KEY, visitorId);
         }
 
-        let conversationId = localStorage.getItem(CONVERSATION_STORAGE_KEY);
+        const conversationId = localStorage.getItem(CONVERSATION_STORAGE_KEY);
 
-        let visitorToken = localStorage.getItem(VISITOR_TOKEN_STORAGE_KEY);
+        const visitorToken = localStorage.getItem(VISITOR_TOKEN_STORAGE_KEY);
 
         let activeConversation: Conversation | null = null;
 
-        // Recupera a conversa existente usando o ID e o token.
         if (conversationId && visitorToken) {
           try {
             const response = await fetch(
@@ -124,11 +126,6 @@ export default function AtendenteWhatsApp() {
               ) {
                 activeConversation = savedConversation;
               }
-            } else {
-              console.warn(
-                "Não foi possível recuperar a conversa:",
-                response.status,
-              );
             }
           } catch (err) {
             console.warn("Falha ao recuperar a conversa:", err);
@@ -137,51 +134,20 @@ export default function AtendenteWhatsApp() {
 
         if (cancelled) return;
 
-        // Cria uma nova conversa se não houver uma válida.
-        if (!activeConversation) {
+        // Não cria conversa automaticamente.
+        // O visitante precisa informar o nome primeiro.
+        if (!activeConversation || !visitorToken) {
           localStorage.removeItem(CONVERSATION_STORAGE_KEY);
           localStorage.removeItem(VISITOR_TOKEN_STORAGE_KEY);
 
-          const response = await fetch(`${API_URL}/chat/conversations`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ visitorId }),
-          });
-
-          if (!response.ok) {
-            const details = await response.text();
-
-            console.error("Erro ao criar conversa:", response.status, details);
-
-            throw new Error(
-              `Não foi possível iniciar o atendimento (HTTP ${response.status}).`,
-            );
-          }
-
-          const result: CreateConversationResponse = await response.json();
-
-          if (!result.conversation?._id || !result.visitorToken) {
-            throw new Error(
-              "A API não retornou a conversa e o token esperados.",
-            );
-          }
-
-          activeConversation = result.conversation;
-          conversationId = result.conversation._id;
-          visitorToken = result.visitorToken;
-
-          localStorage.setItem(CONVERSATION_STORAGE_KEY, conversationId);
-
-          localStorage.setItem(VISITOR_TOKEN_STORAGE_KEY, visitorToken);
+          setConversation(null);
+          setMessages([]);
+          return;
         }
-
-        if (cancelled) return;
 
         setConversation(activeConversation);
 
-        // Carrega o histórico autenticado.
+        // Carrega o histórico usando o token do visitante.
         const historyResponse = await fetch(
           `${API_URL}/chat/visitor/conversations/${encodeURIComponent(
             activeConversation._id,
@@ -228,6 +194,96 @@ export default function AtendenteWhatsApp() {
     };
   }, []);
 
+  // Cria a conversa somente depois que o visitante informa o nome.
+  async function startConversation(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const name = visitorName.trim();
+
+    if (name.length < 2) {
+      setError("Informe seu nome com pelo menos 2 caracteres.");
+      return;
+    }
+
+    if (startingNewConversation) return;
+
+    setStartingNewConversation(true);
+    setError("");
+
+    try {
+      let visitorId = localStorage.getItem(VISITOR_STORAGE_KEY);
+
+      if (!visitorId) {
+        visitorId = `visitante-${crypto.randomUUID()}`;
+        localStorage.setItem(VISITOR_STORAGE_KEY, visitorId);
+      }
+
+      const response = await fetch(`${API_URL}/chat/conversations`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          visitorId,
+          name,
+        }),
+      });
+
+      if (!response.ok) {
+        const details = await response.text();
+
+        console.error("Erro ao criar conversa:", response.status, details);
+
+        throw new Error(
+          "Não foi possível iniciar o atendimento. Tente novamente.",
+        );
+      }
+
+      const result: CreateConversationResponse = await response.json();
+
+      if (!result.conversation?._id || !result.visitorToken) {
+        throw new Error("A API não retornou a conversa e o token esperados.");
+      }
+
+      localStorage.setItem(CONVERSATION_STORAGE_KEY, result.conversation._id);
+
+      localStorage.setItem(VISITOR_TOKEN_STORAGE_KEY, result.visitorToken);
+
+      setMessages([]);
+      setMessage("");
+      setClosedNotice("");
+      setSocketReady(false);
+      setConversation(result.conversation);
+    } catch (err) {
+      console.error("Erro ao iniciar atendimento:", err);
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Não foi possível iniciar o atendimento. Tente novamente.",
+      );
+    } finally {
+      setStartingNewConversation(false);
+    }
+  }
+
+  // Solicita o nome novamente antes de criar outra conversa.
+  function startNewConversation() {
+    if (startingNewConversation) return;
+
+    localStorage.removeItem(CONVERSATION_STORAGE_KEY);
+    localStorage.removeItem(VISITOR_TOKEN_STORAGE_KEY);
+
+    setConversation(null);
+    setMessages([]);
+    setMessage("");
+    setVisitorName("");
+    setClosedNotice("");
+    setError("");
+    setSocketReady(false);
+    setSending(false);
+  }
+
   // Conecta o visitante à sala autenticada do Socket.IO.
   useEffect(() => {
     if (!conversation || conversation.status !== "open") {
@@ -254,9 +310,6 @@ export default function AtendenteWhatsApp() {
     });
 
     socketRef.current = socket;
-
-    console.log("Socket criado:", socket);
-    console.log("Socket URL:", API_URL);
 
     function joinRoom() {
       socket.emit(
@@ -291,7 +344,6 @@ export default function AtendenteWhatsApp() {
       addMessage(incoming);
     }
 
-    // Recebe o aviso enviado pelo backend quando o atendimento é encerrado.
     function handleConversationClosed(payload: ConversationClosedPayload) {
       if (payload?.conversationId !== conversationId) {
         return;
@@ -356,81 +408,7 @@ export default function AtendenteWhatsApp() {
     });
   }, [messages, chatOpen, closedNotice]);
 
-  // Inicia uma nova conversa sem atualizar a página.
-  async function startNewConversation() {
-    if (startingNewConversation) return;
-
-    setStartingNewConversation(true);
-    setError("");
-
-    try {
-      let visitorId = localStorage.getItem(VISITOR_STORAGE_KEY);
-
-      if (!visitorId) {
-        visitorId = `visitante-${crypto.randomUUID()}`;
-        localStorage.setItem(VISITOR_STORAGE_KEY, visitorId);
-      }
-
-      const response = await fetch(`${API_URL}/chat/conversations`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ visitorId }),
-      });
-
-      if (!response.ok) {
-        const details = await response.text();
-
-        console.error(
-          "Erro ao iniciar nova conversa:",
-          response.status,
-          details,
-        );
-
-        throw new Error(
-          `Não foi possível iniciar um novo atendimento (HTTP ${response.status}).`,
-        );
-      }
-
-      const result: CreateConversationResponse = await response.json();
-
-      if (!result.conversation?._id || !result.visitorToken) {
-        throw new Error(
-          "A API não retornou a nova conversa e o token esperados.",
-        );
-      }
-
-      // Salva somente os dados da nova conversa.
-      localStorage.setItem(CONVERSATION_STORAGE_KEY, result.conversation._id);
-
-      localStorage.setItem(VISITOR_TOKEN_STORAGE_KEY, result.visitorToken);
-
-      // Limpa a interface da conversa anterior.
-      setMessages([]);
-      setMessage("");
-      setClosedNotice("");
-      setError("");
-      setSocketReady(false);
-      setSending(false);
-
-      // A mudança de conversa ativa a conexão Socket.IO da nova sala.
-      setConversation(result.conversation);
-    } catch (err) {
-      console.error("Erro ao iniciar novo atendimento:", err);
-
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Não foi possível iniciar um novo atendimento. Tente novamente.",
-      );
-    } finally {
-      setStartingNewConversation(false);
-    }
-  }
-
   // Envia mensagens pelo Socket.IO.
-
   function sendMessage(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -557,7 +535,9 @@ export default function AtendenteWhatsApp() {
                     ? "Atendimento encerrado"
                     : socketReady
                       ? "Conectado ao atendimento"
-                      : "Conectando..."}
+                      : conversation
+                        ? "Conectando..."
+                        : "Vamos conversar?"}
               </p>
             </div>
 
@@ -571,107 +551,141 @@ export default function AtendenteWhatsApp() {
             </button>
           </div>
 
-          {/* Histórico de mensagens */}
-          <div className="flex-1 space-y-3 overflow-y-auto bg-gray-50 p-4">
-            <div className="max-w-[95%] rounded-2xl rounded-tl-sm bg-white p-3 text-sm leading-relaxed text-gray-800 shadow-sm">
-              Olá! Seja bem-vindo à Kairos Industrial! 👋
-              <p className="mt-2">
-                Como podemos ajudar você? Envie sua mensagem e nossa equipe
-                poderá responder por aqui.
-              </p>
-            </div>
-
-            {loading && (
-              <p className="text-center text-xs text-gray-500">
-                Preparando atendimento...
-              </p>
-            )}
-
-            {!loading &&
-              messages.map((item) => (
-                <div
-                  key={item._id}
-                  className={`flex ${
-                    item.sender === "visitor" ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  <div
-                    className={`max-w-[90%] rounded-2xl p-3 text-sm ${
-                      item.sender === "visitor"
-                        ? "rounded-tr-sm bg-[var(--kairos-orange)] text-white"
-                        : "rounded-tl-sm bg-white text-gray-800 shadow-sm"
-                    }`}
-                  >
-                    <p className="mb-1 text-[10px] opacity-70">
-                      {item.sender === "visitor"
-                        ? "Você"
-                        : "Atendimento Kairos"}
-                    </p>
-
-                    <p className="whitespace-pre-wrap break-words">
-                      {item.content}
-                    </p>
-
-                    <p className="mt-1 text-right text-[10px] opacity-60">
-                      {new Date(item.createdAt).toLocaleTimeString("pt-BR", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                  </div>
-                </div>
-              ))}
-
-            <div ref={bottomRef} />
-          </div>
-
-          {/* Aviso de atendimento finalizado */}
-          {conversation?.status === "closed" && (
-            <div
-              role="status"
-              className="shrink-0 border-t border-gray-200 bg-white p-4"
+          {!conversation ? (
+            /* Identificação do visitante */
+            <form
+              onSubmit={startConversation}
+              className="flex flex-1 flex-col justify-center gap-4 bg-gray-50 p-5"
             >
-              <div className="flex flex-col items-center rounded-xl bg-gray-50 px-3 py-4 text-center">
-                <div className="mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-green-100">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="h-6 w-6 text-green-600"
-                    aria-hidden="true"
-                  >
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                    <path d="m9 11 3 3L22 4" />
-                  </svg>
-                </div>
-
-                <h3 className="text-base font-semibold text-gray-900">
-                  Atendimento finalizado
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Olá! Seja bem-vindo à Kairos Industrial!
                 </h3>
 
-                <p className="mt-1 text-sm leading-relaxed text-gray-600">
-                  {closedNotice ||
-                    "Nossa equipe encerrou este atendimento. Agradecemos pelo contato!"}
+                <p className="mt-2 text-sm leading-relaxed text-gray-600">
+                  Para iniciar o atendimento, informe seu nome.
                 </p>
+              </div>
 
-                <p className="mt-3 text-xs text-gray-500">
-                  Precisa de mais alguma coisa?
-                </p>
-
-                <button
-                  type="button"
-                  onClick={startNewConversation}
-                  disabled={startingNewConversation || loading}
-                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--kairos-orange)] px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              <div>
+                <label
+                  htmlFor="visitor-name"
+                  className="mb-1.5 block text-sm font-medium text-gray-700"
                 >
-                  {startingNewConversation ? (
-                    "Iniciando atendimento..."
-                  ) : (
-                    <>
+                  Seu nome
+                </label>
+
+                <input
+                  id="visitor-name"
+                  type="text"
+                  value={visitorName}
+                  onChange={(event) => setVisitorName(event.target.value)}
+                  placeholder="Digite seu nome"
+                  minLength={2}
+                  maxLength={80}
+                  autoComplete="name"
+                  required
+                  disabled={loading || startingNewConversation}
+                  className="w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm text-gray-800 outline-none focus:border-[var(--kairos-orange)] disabled:bg-gray-100"
+                />
+              </div>
+
+              {error && (
+                <p role="alert" className="text-xs text-red-600">
+                  {error}
+                </p>
+              )}
+
+              {loading && (
+                <p className="text-center text-xs text-gray-500">
+                  Verificando atendimento anterior...
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={
+                  loading ||
+                  startingNewConversation ||
+                  visitorName.trim().length < 2
+                }
+                className="w-full rounded-xl bg-[var(--kairos-orange)] px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {startingNewConversation
+                  ? "Iniciando atendimento..."
+                  : "Iniciar atendimento"}
+              </button>
+            </form>
+          ) : (
+            <>
+              {/* Histórico de mensagens */}
+              <div className="flex-1 space-y-3 overflow-y-auto bg-gray-50 p-4">
+                <div className="max-w-[95%] rounded-2xl rounded-tl-sm bg-white p-3 text-sm leading-relaxed text-gray-800 shadow-sm">
+                  Olá, {conversation.name}! Seja bem-vindo(a) à Kairos
+                  Industrial! 👋
+                  <p className="mt-2">
+                    Como podemos ajudar você? Envie sua mensagem e nossa equipe
+                    poderá responder por aqui.
+                  </p>
+                </div>
+
+                {loading && (
+                  <p className="text-center text-xs text-gray-500">
+                    Preparando atendimento...
+                  </p>
+                )}
+
+                {!loading &&
+                  messages.map((item) => (
+                    <div
+                      key={item._id}
+                      className={`flex ${
+                        item.sender === "visitor"
+                          ? "justify-end"
+                          : "justify-start"
+                      }`}
+                    >
+                      <div
+                        className={`max-w-[90%] rounded-2xl p-3 text-sm ${
+                          item.sender === "visitor"
+                            ? "rounded-tr-sm bg-[var(--kairos-orange)] text-white"
+                            : "rounded-tl-sm bg-white text-gray-800 shadow-sm"
+                        }`}
+                      >
+                        <p className="mb-1 text-[10px] opacity-70">
+                          {item.sender === "visitor"
+                            ? "Você"
+                            : "Atendimento Kairos"}
+                        </p>
+
+                        <p className="whitespace-pre-wrap break-words">
+                          {item.content}
+                        </p>
+
+                        <p className="mt-1 text-right text-[10px] opacity-60">
+                          {new Date(item.createdAt).toLocaleTimeString(
+                            "pt-BR",
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            },
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+
+                <div ref={bottomRef} />
+              </div>
+
+              {/* Aviso de atendimento finalizado */}
+              {conversation.status === "closed" && (
+                <div
+                  role="status"
+                  className="shrink-0 border-t border-gray-200 bg-white p-4"
+                >
+                  <div className="flex flex-col items-center rounded-xl bg-gray-50 px-3 py-4 text-center">
+                    <div className="mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-green-100">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
@@ -680,67 +694,87 @@ export default function AtendenteWhatsApp() {
                         strokeWidth="2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        className="h-4 w-4"
+                        className="h-6 w-6 text-green-600"
                         aria-hidden="true"
                       >
-                        <path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8A8.5 8.5 0 0 1 8.7 3.9a8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8z" />
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                        <path d="m9 11 3 3L22 4" />
                       </svg>
+                    </div>
+
+                    <h3 className="text-base font-semibold text-gray-900">
+                      Atendimento finalizado
+                    </h3>
+
+                    <p className="mt-1 text-sm leading-relaxed text-gray-600">
+                      {closedNotice ||
+                        "Nossa equipe encerrou este atendimento. Agradecemos pelo contato!"}
+                    </p>
+
+                    <p className="mt-3 text-xs text-gray-500">
+                      Precisa de mais alguma coisa?
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={startNewConversation}
+                      disabled={startingNewConversation || loading}
+                      className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--kairos-orange)] px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
                       Iniciar novo atendimento
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          )}
+                    </button>
+                  </div>
+                </div>
+              )}
 
-          {/* Mensagens de erro */}
-          {error && (
-            <p
-              role="alert"
-              className="shrink-0 bg-red-50 px-3 py-2 text-xs text-red-600"
-            >
-              {error}
-            </p>
-          )}
+              {/* Mensagens de erro */}
+              {error && (
+                <p
+                  role="alert"
+                  className="shrink-0 bg-red-50 px-3 py-2 text-xs text-red-600"
+                >
+                  {error}
+                </p>
+              )}
 
-          {/* Campo para enviar mensagens */}
-          {conversation?.status !== "closed" && (
-            <form
-              onSubmit={sendMessage}
-              className="flex shrink-0 gap-2 border-t border-gray-100 bg-white p-3"
-            >
-              <input
-                type="text"
-                value={message}
-                onChange={(event) => setMessage(event.target.value)}
-                placeholder="Digite sua mensagem..."
-                maxLength={2000}
-                disabled={
-                  loading ||
-                  !conversation ||
-                  conversation.status !== "open" ||
-                  !socketReady ||
-                  sending
-                }
-                className="min-w-0 flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-800 outline-none focus:border-[var(--kairos-orange)] disabled:bg-gray-100"
-              />
+              {/* Campo para enviar mensagens */}
+              {conversation.status !== "closed" && (
+                <form
+                  onSubmit={sendMessage}
+                  className="flex shrink-0 gap-2 border-t border-gray-100 bg-white p-3"
+                >
+                  <input
+                    type="text"
+                    value={message}
+                    onChange={(event) => setMessage(event.target.value)}
+                    placeholder="Digite sua mensagem..."
+                    maxLength={2000}
+                    disabled={
+                      loading ||
+                      conversation.status !== "open" ||
+                      !socketReady ||
+                      sending
+                    }
+                    className="min-w-0 flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-800 outline-none focus:border-[var(--kairos-orange)] disabled:bg-gray-100"
+                  />
 
-              <button
-                type="submit"
-                disabled={
-                  !message.trim() ||
-                  loading ||
-                  sending ||
-                  !conversation ||
-                  conversation.status !== "open" ||
-                  !socketReady
-                }
-                aria-label="Enviar mensagem"
-                className="rounded-xl bg-[var(--kairos-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {sending ? "..." : "Enviar"}
-              </button>
-            </form>
+                  <button
+                    type="submit"
+                    disabled={
+                      !message.trim() ||
+                      loading ||
+                      sending ||
+                      conversation.status !== "open" ||
+                      !socketReady
+                    }
+                    aria-label="Enviar mensagem"
+                    className="rounded-xl bg-[var(--kairos-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {sending ? "..." : "Enviar"}
+                  </button>
+                </form>
+              )}
+            </>
           )}
         </div>
       )}
