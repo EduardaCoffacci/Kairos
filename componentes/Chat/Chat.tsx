@@ -1,55 +1,22 @@
 "use client";
 
+import {
+  createChatConversation,
+  fetchVisitorConversation,
+  fetchConversationMessages,
+} from "./chat.api";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { io, type Socket } from "socket.io-client";
-
-type Conversation = {
-  _id: string;
-  visitorId: string;
-  name: string;
-  status: "open" | "closed";
-};
-
-type Message = {
-  _id: string;
-  conversationId: string | { _id: string };
-  sender: "visitor" | "admin";
-  content: string;
-  createdAt: string;
-};
-
-type CreateConversationResponse = {
-  conversation: Conversation;
-  visitorToken: string;
-};
-
-type SocketResponse = {
-  success?: boolean;
-  message?: Message | string;
-  error?: string;
-};
-
-type ConversationClosedPayload = {
-  conversationId: string;
-  message: string;
-};
-
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ??
-  (process.env.NODE_ENV === "development"
-    ? "http://localhost:3001"
-    : "https://kairos-api-kca6.onrender.com");
-
-const VISITOR_STORAGE_KEY = "kairos-chat-visitor-id";
-const CONVERSATION_STORAGE_KEY = "kairos-chat-conversation-id";
-const VISITOR_TOKEN_STORAGE_KEY = "kairos-chat-visitor-token";
-
-function getConversationId(message: Message): string {
-  return typeof message.conversationId === "string"
-    ? message.conversationId
-    : message.conversationId._id;
-}
+import { createChatSocket } from "./chat.socket";
+import { CHAT_CONFIG } from "./chat.constants";
+import { getConversationId } from "./chat.utils";
+import type { Socket } from "socket.io-client";
+import type {
+  Conversation,
+  Message,
+  SocketResponse,
+  ConversationClosedPayload,
+} from "./chat.types";
 
 export default function AtendenteWhatsApp() {
   const [chatOpen, setChatOpen] = useState(false);
@@ -88,44 +55,36 @@ export default function AtendenteWhatsApp() {
       setClosedNotice("");
 
       try {
-        let visitorId = localStorage.getItem(VISITOR_STORAGE_KEY);
+        let visitorId = localStorage.getItem(CHAT_CONFIG.visitorStorageKey);
 
         if (!visitorId) {
           visitorId = `visitante-${crypto.randomUUID()}`;
-          localStorage.setItem(VISITOR_STORAGE_KEY, visitorId);
+          localStorage.setItem(CHAT_CONFIG.visitorStorageKey, visitorId);
         }
 
-        const conversationId = localStorage.getItem(CONVERSATION_STORAGE_KEY);
+        const conversationId = localStorage.getItem(
+          CHAT_CONFIG.conversationStorageKey,
+        );
 
-        const visitorToken = localStorage.getItem(VISITOR_TOKEN_STORAGE_KEY);
+        const visitorToken = localStorage.getItem(
+          CHAT_CONFIG.visitorTokenStorageKey,
+        );
 
         let activeConversation: Conversation | null = null;
 
         if (conversationId && visitorToken) {
           try {
-            const response = await fetch(
-              `${API_URL}/chat/visitor/conversations/${encodeURIComponent(
-                conversationId,
-              )}`,
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ visitorToken }),
-              },
+            const savedConversation = await fetchVisitorConversation(
+              conversationId,
+              visitorToken,
             );
 
-            if (response.ok) {
-              const savedConversation: Conversation = await response.json();
-
-              if (
-                savedConversation._id === conversationId &&
-                savedConversation.visitorId === visitorId &&
-                savedConversation.status === "open"
-              ) {
-                activeConversation = savedConversation;
-              }
+            if (
+              savedConversation._id === conversationId &&
+              savedConversation.visitorId === visitorId &&
+              savedConversation.status === "open"
+            ) {
+              activeConversation = savedConversation;
             }
           } catch (err) {
             console.warn("Falha ao recuperar a conversa:", err);
@@ -137,8 +96,8 @@ export default function AtendenteWhatsApp() {
         // Não cria conversa automaticamente.
         // O visitante precisa informar o nome primeiro.
         if (!activeConversation || !visitorToken) {
-          localStorage.removeItem(CONVERSATION_STORAGE_KEY);
-          localStorage.removeItem(VISITOR_TOKEN_STORAGE_KEY);
+          localStorage.removeItem(CHAT_CONFIG.conversationStorageKey);
+          localStorage.removeItem(CHAT_CONFIG.visitorTokenStorageKey);
 
           setConversation(null);
           setMessages([]);
@@ -148,26 +107,10 @@ export default function AtendenteWhatsApp() {
         setConversation(activeConversation);
 
         // Carrega o histórico usando o token do visitante.
-        const historyResponse = await fetch(
-          `${API_URL}/chat/visitor/conversations/${encodeURIComponent(
-            activeConversation._id,
-          )}/messages`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ visitorToken }),
-          },
+        const history = await fetchConversationMessages(
+          activeConversation._id,
+          visitorToken,
         );
-
-        if (!historyResponse.ok) {
-          throw new Error(
-            `Não foi possível carregar o histórico (HTTP ${historyResponse.status}).`,
-          );
-        }
-
-        const history: Message[] = await historyResponse.json();
 
         if (cancelled) return;
 
@@ -211,43 +154,28 @@ export default function AtendenteWhatsApp() {
     setError("");
 
     try {
-      let visitorId = localStorage.getItem(VISITOR_STORAGE_KEY);
+      let visitorId = localStorage.getItem(CHAT_CONFIG.visitorStorageKey);
 
       if (!visitorId) {
         visitorId = `visitante-${crypto.randomUUID()}`;
-        localStorage.setItem(VISITOR_STORAGE_KEY, visitorId);
+        localStorage.setItem(CHAT_CONFIG.visitorStorageKey, visitorId);
       }
 
-      const response = await fetch(`${API_URL}/chat/conversations`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          visitorId,
-          name,
-        }),
-      });
-
-      if (!response.ok) {
-        const details = await response.text();
-
-        console.error("Erro ao criar conversa:", response.status, details);
-
-        throw new Error(
-          "Não foi possível iniciar o atendimento. Tente novamente.",
-        );
-      }
-
-      const result: CreateConversationResponse = await response.json();
+      const result = await createChatConversation(visitorId, name);
 
       if (!result.conversation?._id || !result.visitorToken) {
         throw new Error("A API não retornou a conversa e o token esperados.");
       }
 
-      localStorage.setItem(CONVERSATION_STORAGE_KEY, result.conversation._id);
+      localStorage.setItem(
+        CHAT_CONFIG.conversationStorageKey,
+        result.conversation._id,
+      );
 
-      localStorage.setItem(VISITOR_TOKEN_STORAGE_KEY, result.visitorToken);
+      localStorage.setItem(
+        CHAT_CONFIG.visitorTokenStorageKey,
+        result.visitorToken,
+      );
 
       setMessages([]);
       setMessage("");
@@ -271,8 +199,8 @@ export default function AtendenteWhatsApp() {
   function startNewConversation() {
     if (startingNewConversation) return;
 
-    localStorage.removeItem(CONVERSATION_STORAGE_KEY);
-    localStorage.removeItem(VISITOR_TOKEN_STORAGE_KEY);
+    localStorage.removeItem(CHAT_CONFIG.conversationStorageKey);
+    localStorage.removeItem(CHAT_CONFIG.visitorTokenStorageKey);
 
     setConversation(null);
     setMessages([]);
@@ -291,7 +219,9 @@ export default function AtendenteWhatsApp() {
     }
 
     const conversationId = conversation._id;
-    const visitorToken = localStorage.getItem(VISITOR_TOKEN_STORAGE_KEY);
+    const visitorToken = localStorage.getItem(
+      CHAT_CONFIG.visitorTokenStorageKey,
+    );
 
     if (!visitorToken) {
       socketRef.current = null;
@@ -303,11 +233,7 @@ export default function AtendenteWhatsApp() {
       return;
     }
 
-    const socket = io(API_URL, {
-      transports: ["websocket"],
-      timeout: 10000,
-      reconnection: false,
-    });
+    const socket = createChatSocket();
 
     socketRef.current = socket;
 

@@ -3,35 +3,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-type Conversation = {
-  _id: string;
-  visitorId: string;
-  name: string;
-  status: "open" | "closed";
-  createdAt: string;
-  updatedAt: string;
-};
+import ConversationList from "./components/ConversationList";
+import ChatMessages from "./components/ChatMessage";
+import ChatComposer from "./components/ChatComposer";
 
-type Message = {
-  _id: string;
-  conversationId: string;
-  sender: "visitor" | "admin";
-  content: string;
-  createdAt: string;
-};
+import { API_URL, REFRESH_INTERVAL } from "./chat-admin.constants";
 
-type UnreadCount = {
-  conversationId: string;
-  count: number;
-};
-
-type ConversationFilter = "all" | "open" | "closed" | "unread";
-
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ??
-  (process.env.NODE_ENV === "development" ? "http://localhost:3001" : "");
-
-const REFRESH_INTERVAL = 5000;
+import type {
+  Conversation,
+  ConversationFilter,
+  Message,
+  UnreadCount,
+} from "./chat-admin.types";
 
 export default function ChatAdminPage() {
   const router = useRouter();
@@ -68,7 +51,6 @@ export default function ChatAdminPage() {
 
     async function checkSession() {
       try {
-        // Remove somente o token antigo. O JWT atual não fica no localStorage.
         window.localStorage.removeItem("kairos_admin_token");
 
         const response = await fetch(`${API_URL}/auth/me`, {
@@ -98,7 +80,7 @@ export default function ChatAdminPage() {
     };
   }, []);
 
-  // Sem sessão válida, encaminha para a página de login.
+  // Redireciona para o login quando não há sessão válida.
   useEffect(() => {
     if (authChecked && !isAuthenticated) {
       router.replace("/adm/login");
@@ -115,14 +97,13 @@ export default function ChatAdminPage() {
     setMessages([]);
     setUnreadCounts({});
     setMessage("");
-
     setConversationFilter("all");
     setLoadingMessages(false);
     setSending(false);
     setClosingConversation(false);
   }, []);
 
-  // Todas as requisições administrativas usam o cookie automaticamente.
+  // Todas as requisições administrativas usam o cookie.
   const authenticatedFetch = useCallback(
     async (path: string, options: RequestInit = {}) => {
       const headers = new Headers(options.headers);
@@ -154,7 +135,7 @@ export default function ChatAdminPage() {
     [clearAdminData],
   );
 
-  // Logout no servidor e limpeza do estado local.
+  // Logout.
   async function handleLogout() {
     try {
       const response = await fetch(`${API_URL}/auth/logout`, {
@@ -178,6 +159,7 @@ export default function ChatAdminPage() {
     }
   }
 
+  // Atualiza os contadores de mensagens não lidas.
   const refreshUnreadCounts = useCallback(async () => {
     try {
       const response = await authenticatedFetch("/chat/unread-counts");
@@ -206,6 +188,7 @@ export default function ChatAdminPage() {
     }
   }, [authenticatedFetch]);
 
+  // Atualiza a lista de conversas.
   const refreshConversations = useCallback(async () => {
     try {
       const response = await authenticatedFetch("/chat/conversations");
@@ -222,8 +205,6 @@ export default function ChatAdminPage() {
       );
 
       setConversations(data);
-
-      // Remove seleções de conversas que não existem mais na resposta.
 
       const selected = selectedConversationRef.current;
 
@@ -254,7 +235,7 @@ export default function ChatAdminPage() {
     }
   }, [authenticatedFetch]);
 
-  // Carrega o histórico da conversa selecionada.
+  // Carrega as mensagens da conversa selecionada.
   const refreshSelectedMessages = useCallback(
     async (conversationId: string, requestId: number) => {
       const response = await authenticatedFetch(
@@ -296,7 +277,7 @@ export default function ChatAdminPage() {
     [authenticatedFetch],
   );
 
-  // Atualiza os dados periodicamente somente com sessão autenticada.
+  // Atualização periódica.
   useEffect(() => {
     if (!authChecked || !isAuthenticated) return;
 
@@ -332,6 +313,7 @@ export default function ChatAdminPage() {
     refreshSelectedMessages,
   ]);
 
+  // Seleciona uma conversa e marca suas mensagens como lidas.
   const selectConversation = useCallback(
     async (conversation: Conversation) => {
       const requestId = ++requestIdRef.current;
@@ -375,7 +357,7 @@ export default function ChatAdminPage() {
     [authenticatedFetch, refreshSelectedMessages, refreshUnreadCounts],
   );
 
-  // Envia mensagens do administrador pela rota HTTP autenticada.
+  // Envia uma mensagem do administrador.
   async function sendMessage() {
     const content = message.trim();
     const conversation = selectedConversation;
@@ -409,7 +391,6 @@ export default function ChatAdminPage() {
       setMessage("");
 
       await refreshSelectedMessages(conversation._id, requestIdRef.current);
-
       await refreshConversations();
     } catch (err) {
       if (
@@ -424,6 +405,7 @@ export default function ChatAdminPage() {
     }
   }
 
+  // Encerra uma conversa.
   async function closeConversation() {
     const conversation = selectedConversation;
 
@@ -468,41 +450,7 @@ export default function ChatAdminPage() {
     }
   }
 
-  // Contadores calculados a partir dos dados existentes.
-  const totalUnread = Object.values(unreadCounts).reduce(
-    (total, count) => total + count,
-    0,
-  );
-
-  const openCount = conversations.filter(
-    (conversation) => conversation.status === "open",
-  ).length;
-
-  const closedCount = conversations.filter(
-    (conversation) => conversation.status === "closed",
-  ).length;
-
-  const unreadConversationCount = Object.values(unreadCounts).filter(
-    (count) => count > 0,
-  ).length;
-
-  const filteredConversations = conversations.filter((conversation) => {
-    if (conversationFilter === "open") {
-      return conversation.status === "open";
-    }
-
-    if (conversationFilter === "closed") {
-      return conversation.status === "closed";
-    }
-
-    if (conversationFilter === "unread") {
-      return (unreadCounts[conversation._id] ?? 0) > 0;
-    }
-
-    return true;
-  });
-
-  // O painel só é renderizado depois da verificação da sessão.
+  // Exibe uma tela simples durante a verificação da sessão.
   if (!authChecked || !isAuthenticated) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-black text-white">
@@ -518,155 +466,18 @@ export default function ChatAdminPage() {
   return (
     <main className="min-h-screen bg-black p-3 text-white sm:p-6">
       <div className="mx-auto flex h-[calc(100vh-24px)] max-w-7xl overflow-hidden rounded-xl border border-white/10 bg-zinc-950 sm:h-[calc(100vh-48px)]">
-        <aside className="flex w-72 shrink-0 flex-col overflow-hidden border-r border-white/10 sm:w-80">
-          <div className="border-b border-white/10 p-5">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h1 className="text-xl font-semibold">Kairos Atendimento</h1>
-                <p className="mt-1 text-sm text-zinc-400">
-                  Central de conversas
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => void handleLogout()}
-                className="rounded-md border border-white/10 px-3 py-1.5 text-xs text-zinc-300 hover:bg-white/10"
-              >
-                Sair
-              </button>
-            </div>
-
-            {totalUnread > 0 && (
-              <p className="mt-3 text-sm font-medium text-[#e04f11]">
-                {totalUnread} mensagem(ns) não lida(s)
-              </p>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 border-b border-white/10 p-3">
-            {[
-              {
-                id: "all",
-                label: "Todas",
-                count: conversations.length,
-              },
-              {
-                id: "open",
-                label: "Abertas",
-                count: openCount,
-              },
-              {
-                id: "closed",
-                label: "Fechadas",
-                count: closedCount,
-              },
-              {
-                id: "unread",
-                label: "Não lidas",
-                count: unreadConversationCount,
-              },
-            ].map((filter) => (
-              <button
-                key={filter.id}
-                type="button"
-                onClick={() =>
-                  setConversationFilter(filter.id as ConversationFilter)
-                }
-                aria-pressed={conversationFilter === filter.id}
-                className={`flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm transition ${
-                  conversationFilter === filter.id
-                    ? "bg-[#e04f11]/20 text-white ring-1 ring-[#e04f11]/50"
-                    : "bg-white/5 text-zinc-300 hover:bg-white/10"
-                }`}
-              >
-                <span>{filter.label}</span>
-                <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs">
-                  {filter.count}
-                </span>
-              </button>
-            ))}
-          </div>
-
-          <div className="flex-1 space-y-2 overflow-y-auto p-3">
-            {loadingConversations && (
-              <p className="p-3 text-sm text-zinc-400">
-                Carregando conversas...
-              </p>
-            )}
-
-            {!loadingConversations && filteredConversations.length === 0 && (
-              <p className="p-3 text-sm text-zinc-400">
-                {conversations.length === 0
-                  ? "Nenhuma conversa encontrada."
-                  : "Nenhuma conversa corresponde a este filtro."}
-              </p>
-            )}
-
-            {filteredConversations.map((conversation) => {
-              const unread = unreadCounts[conversation._id] ?? 0;
-              const isSelected = selectedConversation?._id === conversation._id;
-
-              return (
-                <div
-                  key={conversation._id}
-                  className={`rounded-lg border transition ${
-                    isSelected
-                      ? "border-[#e04f11]/60 bg-[#e04f11]/10"
-                      : "border-transparent bg-white/5 hover:bg-white/10"
-                  }`}
-                >
-                  <div className="flex items-start gap-2 p-3">
-                    <button
-                      type="button"
-                      onClick={() => void selectConversation(conversation)}
-                      className="min-w-0 flex-1 text-left"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="min-w-0 truncate font-medium">
-                          {conversation.name || "Cliente"}
-                        </p>
-
-                        {unread > 0 && (
-                          <span className="flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full bg-[#e04f11] px-2 text-xs font-bold">
-                            {unread > 99 ? "99+" : unread}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="mt-2 flex items-center gap-2">
-                        <span
-                          className={`inline-block h-2 w-2 rounded-full ${
-                            conversation.status === "open"
-                              ? "bg-emerald-400"
-                              : "bg-zinc-500"
-                          }`}
-                        />
-
-                        <span className="text-xs text-zinc-400">
-                          {conversation.status === "open"
-                            ? "Aberta"
-                            : "Fechada"}
-                        </span>
-                      </div>
-
-                      <p className="mt-2 text-xs text-zinc-500">
-                        Atualizada às{" "}
-                        {new Date(conversation.updatedAt).toLocaleTimeString(
-                          "pt-BR",
-                          {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          },
-                        )}
-                      </p>
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </aside>
+        <ConversationList
+          conversations={conversations}
+          selectedConversationId={selectedConversation?._id ?? null}
+          unreadCounts={unreadCounts}
+          conversationFilter={conversationFilter}
+          loading={loadingConversations}
+          onFilterChange={setConversationFilter}
+          onSelectConversation={(conversation) =>
+            void selectConversation(conversation)
+          }
+          onLogout={() => void handleLogout()}
+        />
 
         <section className="flex min-w-0 flex-1 flex-col">
           <header className="flex items-center justify-between gap-4 border-b border-white/10 p-4 sm:p-5">
@@ -698,87 +509,12 @@ export default function ChatAdminPage() {
             )}
           </header>
 
-          <div className="flex-1 space-y-4 overflow-y-auto p-4 sm:p-6">
-            {!selectedConversation && (
-              <div className="flex h-full items-center justify-center">
-                <div className="text-center">
-                  <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-white/5">
-                    <svg
-                      aria-hidden="true"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      className="h-7 w-7 text-zinc-400"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M8 10h8M8 14h5m-7 6-3 1 1-4a8 8 0 1 1 3 3Z"
-                      />
-                    </svg>
-                  </div>
-
-                  <p className="text-center text-zinc-500">
-                    Selecione uma conversa na coluna esquerda.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {loadingMessages && (
-              <p className="text-sm text-zinc-400">Carregando mensagens...</p>
-            )}
-
-            {selectedConversation &&
-              !loadingMessages &&
-              messages.filter(
-                (item) => item.conversationId === selectedConversation._id,
-              ).length === 0 && (
-                <p className="text-sm text-zinc-400">
-                  Nenhuma mensagem nesta conversa.
-                </p>
-              )}
-
-            {!loadingMessages &&
-              messages
-                .filter(
-                  (item) => item.conversationId === selectedConversation?._id,
-                )
-                .map((item) => (
-                  <div
-                    key={item._id}
-                    className={`flex ${
-                      item.sender === "admin" ? "justify-end" : "justify-start"
-                    }`}
-                  >
-                    <div
-                      className={`max-w-md rounded-xl px-4 py-3 ${
-                        item.sender === "admin"
-                          ? "bg-[#e04f11] text-white"
-                          : "bg-zinc-800 text-white"
-                      }`}
-                    >
-                      <p className="mb-1 text-xs opacity-70">
-                        {item.sender === "admin"
-                          ? "Atendente"
-                          : (selectedConversation?.name ?? "Cliente")}
-                      </p>
-
-                      <p className="whitespace-pre-wrap break-words text-sm">
-                        {item.content}
-                      </p>
-
-                      <p className="mt-2 text-right text-xs opacity-60">
-                        {new Date(item.createdAt).toLocaleTimeString("pt-BR", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-          </div>
+          <ChatMessages
+            messages={messages}
+            conversationId={selectedConversation?._id ?? null}
+            conversationName={selectedConversation?.name ?? "Cliente"}
+            loading={loadingMessages}
+          />
 
           {error && (
             <p
@@ -798,49 +534,16 @@ export default function ChatAdminPage() {
             </div>
           )}
 
-          <div className="border-t border-white/10 p-3 sm:p-4">
-            <form
-              className="flex gap-3"
-              onSubmit={(event) => {
-                event.preventDefault();
-                void sendMessage();
-              }}
-            >
-              <input
-                type="text"
-                value={message}
-                onChange={(event) => setMessage(event.target.value)}
-                placeholder={
-                  !selectedConversation
-                    ? "Selecione uma conversa primeiro"
-                    : selectedConversation.status === "closed"
-                      ? "Esta conversa foi encerrada"
-                      : "Digite sua mensagem..."
-                }
-                disabled={
-                  !selectedConversation ||
-                  selectedConversation.status !== "open" ||
-                  sending ||
-                  closingConversation
-                }
-                className="min-w-0 flex-1 rounded-lg border border-white/10 bg-zinc-900 px-4 py-3 outline-none placeholder:text-zinc-500 focus:border-[#e04f11] disabled:opacity-50"
-              />
-
-              <button
-                type="submit"
-                disabled={
-                  !message.trim() ||
-                  !selectedConversation ||
-                  selectedConversation.status !== "open" ||
-                  sending ||
-                  closingConversation
-                }
-                className="rounded-lg bg-[#e04f11] px-4 py-3 font-medium hover:opacity-90 disabled:opacity-50 sm:px-6"
-              >
-                {sending ? "Enviando..." : "Enviar"}
-              </button>
-            </form>
-          </div>
+          <ChatComposer
+            message={message}
+            onMessageChange={setMessage}
+            onSend={() => void sendMessage()}
+            disabled={false}
+            sending={sending}
+            closingConversation={closingConversation}
+            conversationSelected={Boolean(selectedConversation)}
+            conversationClosed={selectedConversation?.status === "closed"}
+          />
         </section>
       </div>
     </main>
