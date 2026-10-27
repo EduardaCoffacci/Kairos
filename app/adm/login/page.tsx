@@ -2,11 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
+
+import LoginLoading from "@/componentes/adm/login/LoginLoading";
+import LoginForm from "@/componentes/adm/login/LoginForm";
 
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ??
-  (process.env.NODE_ENV === "development" ? "http://localhost:3001" : "");
+  process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === "development"
+    ? "http://localhost:3001"
+    : "");
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -18,6 +23,7 @@ export default function AdminLoginPage() {
   const [checkingSession, setCheckingSession] = useState(true);
   const [error, setError] = useState("");
 
+  // Verifica se o administrador já está autenticado.
   useEffect(() => {
     async function checkSession() {
       try {
@@ -27,10 +33,9 @@ export default function AdminLoginPage() {
 
         if (response.ok) {
           router.replace("/adm/chat");
-          return;
         }
       } catch {
-        // Se não houver conexão, permite tentar fazer login.
+        // Permite tentar entrar se não conseguir verificar a sessão.
       } finally {
         setCheckingSession(false);
       }
@@ -39,8 +44,9 @@ export default function AdminLoginPage() {
     checkSession();
   }, [router]);
 
-  async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  // Realiza o login.
+  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
 
     setError("");
     setLoginLoading(true);
@@ -48,11 +54,14 @@ export default function AdminLoginPage() {
     try {
       const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include",
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({
+          username,
+          password,
+        }),
       });
 
       if (!response.ok) {
@@ -62,96 +71,107 @@ export default function AdminLoginPage() {
 
       router.replace("/adm/chat");
     } catch {
-      setError("Não foi possível conectar ao servidor.");
+      setError(
+        "Não foi possível conectar ao servidor. Tente novamente.",
+      );
     } finally {
       setLoginLoading(false);
     }
   }
 
+  // Exibe o componente de carregamento.
   if (checkingSession) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-zinc-950 text-zinc-300">
-        Verificando sessão...
-      </main>
-    );
+    return <LoginLoading />;
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-zinc-950 px-4 text-white">
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900 p-8 shadow-xl">
-        <h1 className="text-2xl font-bold">Kairos Atendimento</h1>
+    <main className="relative isolate flex min-h-screen items-center justify-center overflow-hidden bg-[#08090b] px-4 py-10 text-white sm:px-6">
+      {/* Efeitos de fundo */}
+      <div className="pointer-events-none absolute -left-40 -top-40 h-[420px] w-[420px] rounded-full bg-[#e04f11]/15 blur-[120px]" />
 
-        <p className="mt-2 text-sm text-zinc-400">
-          Entre para acessar o painel administrativo.
-        </p>
+      <div className="pointer-events-none absolute -bottom-40 -right-40 h-[420px] w-[420px] rounded-full bg-[#e04f11]/10 blur-[120px]" />
 
-        <form onSubmit={handleLogin} className="mt-8 space-y-5">
-          <div className="space-y-2">
-            <label htmlFor="username" className="text-sm text-zinc-300">
-              Usuário
-            </label>
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,#08090b_75%)]" />
 
-            <input
-              id="username"
-              name="username"
-              type="text"
-              autoComplete="username"
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-              required
-              disabled={loginLoading}
-              className="w-full rounded-lg border border-white/10 bg-zinc-950 px-4 py-3 outline-none transition focus:border-[#e04f11] disabled:opacity-50"
-            />
-          </div>
+      {/* Detalhes decorativos */}
+      <div className="pointer-events-none absolute -left-24 top-20 h-72 w-72 rounded-full border border-[#e04f11]/10" />
 
-          <div className="space-y-2">
-            <label htmlFor="password" className="text-sm text-zinc-300">
-              Senha
-            </label>
+      <div className="pointer-events-none absolute -left-12 top-32 h-48 w-48 rounded-full border border-[#e04f11]/10" />
 
-            <div className="relative">
-              <input
-                id="password"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                autoComplete="current-password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-                disabled={loginLoading}
-                className="w-full rounded-lg border border-white/10 bg-zinc-950 px-4 py-3 pr-12 outline-none transition focus:border-[#e04f11] disabled:opacity-50"
-              />
+      <div className="pointer-events-none absolute -bottom-24 -right-20 h-80 w-80 rounded-full border border-[#e04f11]/10" />
 
-              <button
-                type="button"
-                onClick={() => setShowPassword((current) => !current)}
-                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 transition hover:text-[#e04f11]"
-              >
-                {showPassword ? (
-                  <EyeOff size={20} aria-hidden="true" />
-                ) : (
-                  <Eye size={20} aria-hidden="true" />
-                )}
-              </button>
+      {/* Cartão de login */}
+      <section className="relative w-full max-w-md">
+        <div className="relative overflow-hidden rounded-3xl border border-white/[0.09] bg-zinc-900/80 p-7 shadow-[0_25px_100px_rgba(0,0,0,0.55)] backdrop-blur-2xl sm:p-9">
+          {/* Linha superior */}
+          <div className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-[#e04f11] to-transparent" />
+
+          {/* Cabeçalho */}
+          <header className="mb-8 text-center">
+            <div className="mx-auto mb-6 flex h-[68px] w-[68px] items-center justify-center rounded-2xl bg-gradient-to-br from-[#f15a24] to-[#c83d08] shadow-lg shadow-[#e04f11]/20">
+              <span className="text-4xl font-black tracking-tight text-white">
+                K
+              </span>
             </div>
-          </div>
 
-          {error && (
-            <p role="alert" className="text-sm text-red-400">
-              {error}
+            <div className="mb-4 flex justify-center">
+              <span className="inline-flex items-center gap-2 rounded-full border border-[#e04f11]/20 bg-[#e04f11]/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-orange-400">
+                <ShieldCheck size={12} />
+                Área restrita
+              </span>
+            </div>
+
+            <h1 className="text-3xl font-bold tracking-tight">
+              Kairos{" "}
+              <span className="text-[#e04f11]">Atendimento</span>
+            </h1>
+
+            <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-zinc-400">
+              Entre com suas credenciais para acessar o painel administrativo.
             </p>
-          )}
+          </header>
 
-          <button
-            type="submit"
-            disabled={loginLoading}
-            className="w-full rounded-lg bg-[#e04f11] px-4 py-3 font-semibold transition hover:bg-[#c9440d] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {loginLoading ? "Entrando..." : "Entrar"}
-          </button>
-        </form>
-      </div>
+          {/* Componente do formulário */}
+          <LoginForm
+            username={username}
+            password={password}
+            showPassword={showPassword}
+            loginLoading={loginLoading}
+            error={error}
+            onUsernameChange={setUsername}
+            onPasswordChange={setPassword}
+            onTogglePassword={() =>
+              setShowPassword((previous) => !previous)
+            }
+            onSubmit={handleLogin}
+          />
+
+          {/* Indicador de segurança */}
+          <div className="mt-7 flex items-center gap-3">
+            <div className="h-px flex-1 bg-white/[0.08]" />
+
+            <span className="flex items-center gap-2 text-[11px] text-zinc-500">
+              <ShieldCheck size={14} className="text-[#e04f11]" />
+              Acesso protegido
+            </span>
+
+            <div className="h-px flex-1 bg-white/[0.08]" />
+          </div>
+        </div>
+
+        {/* Rodapé */}
+        <footer className="mt-6 text-center">
+          <p className="text-xs text-zinc-600">
+            Kairos Industrial
+            <span className="mx-2 text-zinc-700">•</span>
+            Painel administrativo
+          </p>
+
+          <p className="mt-2 text-[10px] tracking-wide text-zinc-700">
+            © {new Date().getFullYear()} Todos os direitos reservados.
+          </p>
+        </footer>
+      </section>
     </main>
   );
 }

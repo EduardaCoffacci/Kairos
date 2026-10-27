@@ -23,11 +23,14 @@ export default function Footer() {
             </p>
 
             {/* REDES SOCIAIS */}
+
             <div className="mt-6 flex gap-4">
               <a
-                href="#"
-                aria-label="LinkedIn"
-                className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--kairos-orange)] transition hover:bg-white hover:text-[var(--kairos-orange)]"
+                href="https://www.linkedin.com/company/kairosindustrial/posts/?viewAsMember=true"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="LinkedIn da Kairos Industrial"
+                className="flex h-11 w-11 items-center justify-center rounded-full text-white transition-all duration-300 hover:text-[var(--kairos-orange)] hover:shadow-[0_0_15px_rgba(224,79,17,0.7)]"
               >
                 <FaLinkedin size={21} />
               </a>
@@ -116,9 +119,10 @@ export default function Footer() {
             <h3 className="text-xl font-bold">Contato</h3>
 
             <div className="mt-5 space-y-5">
+              {/* LOCALIZAÇÃO */}
               <div className="flex gap-4">
                 <FaMapMarkerAlt
-                  className="mt-1 shrink-0 text-[var(--kairos-orange)]"
+                  className="mt-1 shrink-0 text-white"
                   size={24}
                 />
 
@@ -127,22 +131,18 @@ export default function Footer() {
                 </p>
               </div>
 
+              {/* TELEFONE */}
               <div className="flex gap-4">
-                <FaPhone
-                  className="mt-1 shrink-0 text-[var(--kairos-orange)]"
-                  size={24}
-                />
+                <FaPhone className="mt-1 shrink-0 text-white" size={24} />
 
                 <div className="flex flex-col gap-2 text-sm text-white/80 sm:text-base">
                   <span>(47) 99218-7965</span>
                 </div>
               </div>
 
+              {/* E-MAIL */}
               <div className="flex gap-4">
-                <FaEnvelope
-                  className="mt-1 shrink-0 text-[var(--kairos-orange)]"
-                  size={24}
-                />
+                <FaEnvelope className="mt-1 shrink-0 text-white" size={24} />
 
                 <div className="flex flex-col gap-2 text-sm text-white/80 sm:text-base">
                   <span>comercial@kairosindustrial.com.br</span>

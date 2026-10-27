@@ -1,6 +1,5 @@
 import React from "react";
-import Image from "next/image";
-import Chat from "../Chat/Chat";
+
 
 export default function Hero() {
   return (
@@ -9,17 +8,16 @@ export default function Hero() {
       <div className="relative z-10 flex min-h-[calc(100vh-80px)] flex-col items-center px-4 pt-20 sm:px-6 lg:pt-24 xl:pt-28">
         {/* Título */}
 
-
-<h1 className="text-center text-[26px] font-bold leading-[1.05] sm:text-[30px] md:text-[36px] lg:text-[44px] xl:text-[66px]">
-  CONVERTENDO BIOMASSA
-  <br />
-  EM ENERGIA LIMPA
-  <br />
-  DE FORMA{" "}
-  <span className="inline-block rounded-lg bg-white px-2 py-0 text-[#e27713] shadow-lg sm:px-3 sm:py-0">
-    SUSTENTÁVEL
-  </span>
-</h1>
+        <h1 className="text-center text-[26px] font-bold leading-[1.05] sm:text-[30px] md:text-[36px] lg:text-[44px] xl:text-[66px]">
+          CONVERTENDO BIOMASSA
+          <br />
+          EM ENERGIA LIMPA
+          <br />
+          DE FORMA{" "}
+          <span className="inline-block rounded-lg bg-white px-2 py-0 text-[#e27713] shadow-lg sm:px-3 sm:py-0">
+            SUSTENTÁVEL
+          </span>
+        </h1>
 
         {/* Descrição */}
         <p className="mx-auto mt-4 max-w-[700px] px-2 text-center text-[10px] leading-relaxed text-white sm:mt-5 sm:text-[12px] md:text-[14px] lg:mt-6 lg:text-[16px]">
@@ -91,10 +89,6 @@ export default function Hero() {
           </div>
         </div>
       </div>
-
-      {/* Atendimento */}
-
-      <Chat />
     </section>
   );
 }
