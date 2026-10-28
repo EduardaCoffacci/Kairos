@@ -1,4 +1,11 @@
 
+import {
+  Badge,
+  Chip,
+  Tab,
+  Tabs,
+} from "@mui/material";
+
 type Conversation = {
   _id: string;
   visitorId: string;
@@ -81,6 +88,7 @@ export default function ConversationList({
 
   return (
     <aside className="flex w-72 shrink-0 flex-col overflow-hidden border-r border-white/10 sm:w-80">
+      {/* Cabeçalho */}
       <div className="border-b border-white/10 p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -106,27 +114,76 @@ export default function ConversationList({
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-2 border-b border-white/10 p-3">
-        {filters.map((filter) => (
-          <button
-            key={filter.id}
-            type="button"
-            onClick={() => onFilterChange(filter.id)}
-            aria-pressed={conversationFilter === filter.id}
-            className={`flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm transition ${
-              conversationFilter === filter.id
-                ? "bg-[#e04f11]/20 text-white ring-1 ring-[#e04f11]/50"
-                : "bg-white/5 text-zinc-300 hover:bg-white/10"
-            }`}
-          >
-            <span>{filter.label}</span>
-            <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs">
-              {filter.count}
-            </span>
-          </button>
-        ))}
+      {/* Filtros com Material UI */}
+      <div className="border-b border-white/10">
+        <Tabs
+          value={conversationFilter}
+          onChange={(_, newValue: ConversationFilter) =>
+            onFilterChange(newValue)
+          }
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
+          aria-label="Filtrar conversas"
+          sx={{
+            minHeight: 48,
+            "& .MuiTabs-indicator": {
+              backgroundColor: "#e04f11",
+              height: 3,
+            },
+            "& .MuiTab-root": {
+              minWidth: "auto",
+              minHeight: 48,
+              px: 1.5,
+              color: "#a1a1aa",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              textTransform: "none",
+            },
+            "& .MuiTab-root.Mui-selected": {
+              color: "#ffffff",
+            },
+            "& .MuiTabs-scrollButtons": {
+              color: "#d4d4d8",
+            },
+          }}
+        >
+          {filters.map((filter) => (
+            <Tab
+              key={filter.id}
+              value={filter.id}
+              label={
+                <Badge
+                  badgeContent={filter.count}
+                  showZero
+                  sx={{
+                    "& .MuiBadge-badge": {
+                      position: "static",
+                      transform: "none",
+                      marginLeft: "8px",
+                      minWidth: 20,
+                      height: 20,
+                      px: 0.5,
+                      borderRadius: "10px",
+                      backgroundColor:
+                        conversationFilter === filter.id
+                          ? "#e04f11"
+                          : "rgba(255,255,255,0.12)",
+                      color: "#ffffff",
+                      fontSize: "0.65rem",
+                      fontWeight: 700,
+                    },
+                  }}
+                >
+                  {filter.label}
+                </Badge>
+              }
+            />
+          ))}
+        </Tabs>
       </div>
 
+      {/* Lista de conversas */}
       <div className="flex-1 space-y-2 overflow-y-auto p-3">
         {loading && (
           <p className="p-3 text-sm text-zinc-400">
@@ -144,7 +201,8 @@ export default function ConversationList({
 
         {filteredConversations.map((conversation) => {
           const unread = unreadCounts[conversation._id] ?? 0;
-          const isSelected = selectedConversationId === conversation._id;
+          const isSelected =
+            selectedConversationId === conversation._id;
 
           return (
             <div
@@ -174,17 +232,34 @@ export default function ConversationList({
                   </div>
 
                   <div className="mt-2 flex items-center gap-2">
-                    <span
-                      className={`inline-block h-2 w-2 rounded-full ${
+                    <Chip
+                      label={
                         conversation.status === "open"
-                          ? "bg-emerald-400"
-                          : "bg-zinc-500"
-                      }`}
+                          ? "Aberta"
+                          : "Fechada"
+                      }
+                      size="small"
+                      sx={{
+                        height: 22,
+                        borderRadius: "6px",
+                        fontSize: "0.7rem",
+                        fontWeight: 600,
+                        backgroundColor:
+                          conversation.status === "open"
+                            ? "rgba(52,211,153,0.12)"
+                            : "rgba(161,161,170,0.12)",
+                        color:
+                          conversation.status === "open"
+                            ? "#6ee7b7"
+                            : "#a1a1aa",
+                        border: "1px solid",
+                        borderColor:
+                          conversation.status === "open"
+                            ? "rgba(52,211,153,0.25)"
+                            : "rgba(161,161,170,0.2)",
+                      }}
                     />
 
-                    <span className="text-xs text-zinc-400">
-                      {conversation.status === "open" ? "Aberta" : "Fechada"}
-                    </span>
                   </div>
 
                   <p className="mt-2 text-xs text-zinc-500">
