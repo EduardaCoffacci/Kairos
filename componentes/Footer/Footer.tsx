@@ -48,6 +48,12 @@ export default function Footer() {
               >
                 Home
               </Link>
+              <Link
+                href="/fornalhas"
+                className="text-white/80 transition hover:text-[var(--kairos-orange)]"
+              >
+                Fornalhas
+              </Link>
 
               <Link
                 href="/produtos"
@@ -78,38 +84,43 @@ export default function Footer() {
 
             <nav className="mt-5 flex flex-col gap-4">
               <Link
-                href="/fornalhas"
+                href="/produtos#moega"
                 className="text-white/80 transition hover:text-[var(--kairos-orange)]"
               >
-                Fornalhas de Biomassa
+                KTMR - Moega de Recepção
               </Link>
 
               <Link
                 href="/produtos"
                 className="text-white/80 transition hover:text-[var(--kairos-orange)]"
               >
-                RTI - Grelhas Móveis
+                KTTC - Transportadora de Correia
               </Link>
 
               <Link
                 href="/produtos"
                 className="text-white/80 transition hover:text-[var(--kairos-orange)]"
               >
-                RTMV - Grelhas Móveis
+                KTPD - Peneira de Disco
               </Link>
 
               <Link
                 href="/produtos"
                 className="text-white/80 transition hover:text-[var(--kairos-orange)]"
               >
-                RTM - Grelhas Fixas Modulares
+                KTRD - Rosca Dosadora
               </Link>
-
               <Link
                 href="/produtos"
                 className="text-white/80 transition hover:text-[var(--kairos-orange)]"
               >
-                RTA - Grelhas Fixas
+                KTSP - Silo Pulmão
+              </Link>
+              <Link
+                href="/produtos"
+                className="text-white/80 transition hover:text-[var(--kairos-orange)]"
+              >
+                KTQB - Queimador de Biomassa
               </Link>
             </nav>
           </div>

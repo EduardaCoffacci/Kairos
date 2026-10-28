@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import AtendenteWhatsApp from "@/componentes/Chat/Chat";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,7 +15,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Kairos Indústria",
-  description: "Soluções em engenharia térmica e aproveitamento de biomassa para geração de energia",
+  description:
+    "Soluções em engenharia térmica e aproveitamento de biomassa para geração de energia",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -23,7 +25,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <AtendenteWhatsApp />
+      </body>
     </html>
   );
 }

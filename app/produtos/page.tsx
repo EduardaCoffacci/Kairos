@@ -54,6 +54,19 @@ export default function ProdutosPage() {
                     ["Projeto", "Adaptável à aplicação"],
                     ["Integração", "Sistemas de transporte e alimentação"],
                     ["Dimensionamento", "Conforme a necessidade do projeto"],
+
+                    ["Descarga", "Realizada com rosca dosadora"],
+                    ["Descarga alternativa", "Realizada através de esteira"],
+                    [
+                      "Controle de volume",
+                      "Sensor capacitivo de nível baixo e nível alto",
+                    ],
+                    ["Controle de vazão", "Sensor capacitivo de embuchamento"],
+                    [
+                      "Temperatura dos rolamentos",
+                      "Controle realizado por sensor de temperatura",
+                    ],
+                    ["Motorização", "Conforme dimensionamento"],
                   ].map(([caracteristica, descricao], index) => (
                     <tr
                       key={caracteristica}
