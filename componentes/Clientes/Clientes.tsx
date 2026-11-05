@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
@@ -18,6 +17,7 @@ import {
   IconButton,
   InputAdornment,
   Paper,
+  Snackbar,
   TextField,
   Typography,
 } from "@mui/material";
@@ -45,6 +45,20 @@ export default function Clientes() {
     null,
   );
   const [excluindo, setExcluindo] = useState(false);
+
+  // Estados das notificações.
+  const [mensagem, setMensagem] = useState("");
+  const [tipoMensagem, setTipoMensagem] = useState<"success" | "error">(
+    "success",
+  );
+  const [snackbarAberto, setSnackbarAberto] = useState(false);
+
+  // Exibe uma notificação na tela.
+  function mostrarMensagem(texto: string, tipo: "success" | "error") {
+    setMensagem(texto);
+    setTipoMensagem(tipo);
+    setSnackbarAberto(true);
+  }
 
   // Busca todos os clientes ou pesquisa pelo termo informado.
   const buscarClientes = useCallback(async (termo = "") => {
@@ -91,11 +105,14 @@ export default function Clientes() {
 
       setClienteExcluindo(null);
 
+      mostrarMensagem("Cliente excluído com sucesso.", "success");
+
       await buscarClientes(busca.trim());
     } catch (error) {
-      setErro(
-        error instanceof Error ? error.message : "Erro ao excluir cliente.",
-      );
+      const mensagemErro =
+        error instanceof Error ? error.message : "Erro ao excluir cliente.";
+
+      mostrarMensagem(mensagemErro, "error");
     } finally {
       setExcluindo(false);
     }
@@ -266,7 +283,7 @@ export default function Clientes() {
             />
           </Box>
 
-          {/* Mensagem de erro */}
+          {/* Mensagem de erro ao carregar clientes */}
           {erro && (
             <Box sx={{ p: 2 }}>
               <Alert severity="error">{erro}</Alert>
@@ -327,7 +344,10 @@ export default function Clientes() {
       <ModalNovoCliente
         aberto={modalAberto}
         onFechar={() => setModalAberto(false)}
-        onSalvo={() => buscarClientes()}
+        onSalvo={async () => {
+          await buscarClientes(busca.trim());
+          mostrarMensagem("Cliente cadastrado com sucesso.", "success");
+        }}
       />
 
       {/* Edição */}
@@ -335,9 +355,11 @@ export default function Clientes() {
         aberto={clienteEditando !== null}
         clienteId={clienteEditando}
         onFechar={() => setClienteEditando(null)}
-        onSalvo={() => buscarClientes(busca.trim())}
+        onSalvo={async () => {
+          await buscarClientes(busca.trim());
+          mostrarMensagem("Cliente atualizado com sucesso.", "success");
+        }}
       />
-
       {/* Confirmação de exclusão */}
       <Dialog
         open={clienteExcluindo !== null}
@@ -411,6 +433,25 @@ export default function Clientes() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Notificação */}
+      <Snackbar
+        open={snackbarAberto}
+        autoHideDuration={5000}
+        onClose={() => setSnackbarAberto(false)}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "right",
+        }}
+      >
+        <Alert
+          severity={tipoMensagem}
+          onClose={() => setSnackbarAberto(false)}
+          variant="filled"
+        >
+          {mensagem}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
