@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Grid from "@mui/material/Grid";
 
@@ -28,15 +29,10 @@ import {
   Package,
   Clock,
   PlusCircle,
-  Building2,
   Factory,
-  CalendarDays,
-  NotebookPen,
-  Hash,
-  Pencil,
 } from "lucide-react";
 
-const API_URL = "http://localhost:3001";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 // TIPOS
 
@@ -79,41 +75,6 @@ interface Resumo {
   atrasadas: number;
 }
 
-interface Producao {
-  id: number;
-  itemOrdem: {
-    id: number;
-    ordem: {
-      id: number;
-    };
-    peca: {
-      id: number;
-      nome: string;
-      material: string;
-    };
-    quantidade: number;
-  };
-  operador: {
-    id: number;
-    name: string;
-  };
-  etapa: string;
-  status: string;
-  dataInicio: string | null;
-  dataConclusao: string | null;
-  quantidadeProduzida: number;
-  quantidadeAprovada: number;
-  quantidadeRejeitada: number;
-  observacoes: string | null;
-  createdAt: string;
-}
-
-interface EventoHistorico {
-  titulo: string;
-  data: string;
-  somenteData: boolean;
-}
-
 // FORMATAÇÃO DE DATAS
 
 function formatarData(data: string | null) {
@@ -124,18 +85,6 @@ function formatarData(data: string | null) {
   return `${dia}/${mes}/${ano}`;
 }
 
-function formatarDataHora(data: string | null) {
-  if (!data) return "Não definido";
-
-  return new Date(data).toLocaleString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 // CORES DOS STATUS
 
 function corStatus(
@@ -144,23 +93,16 @@ function corStatus(
   switch (status) {
     case "ABERTA":
       return "info";
+
     case "EM_ANDAMENTO":
       return "warning";
+
     case "CONCLUIDA":
       return "success";
+
     case "CANCELADA":
       return "error";
-    default:
-      return "default";
-  }
-}
 
-function corStatusProducao(status: string): "warning" | "success" | "default" {
-  switch (status) {
-    case "EM_ANDAMENTO":
-      return "warning";
-    case "CONCLUIDA":
-      return "success";
     default:
       return "default";
   }
@@ -193,6 +135,8 @@ function obterUltimosSeisMeses() {
 // DASHBOARD
 
 export default function DashboardPage() {
+  const router = useRouter();
+
   const [resumo, setResumo] = useState<Resumo | null>(null);
 
   const [ordens, setOrdens] = useState<Ordem[]>([]);
@@ -200,12 +144,6 @@ export default function DashboardPage() {
 
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [pecas, setPecas] = useState<Peca[]>([]);
-
-  const [producoes, setProducoes] = useState<Producao[]>([]);
-
-  const [ordemSelecionada, setOrdemSelecionada] = useState<OrdemRecente | null>(
-    null,
-  );
 
   // FILTROS
 
@@ -227,14 +165,12 @@ export default function DashboardPage() {
           respostaRecentes,
           respostaClientes,
           respostaPecas,
-          respostaProducoes,
         ] = await Promise.all([
           fetch(`${API_URL}/dashboard/resumo`),
           fetch(`${API_URL}/orders`),
           fetch(`${API_URL}/dashboard/ordens-recentes`),
           fetch(`${API_URL}/clients`),
           fetch(`${API_URL}/pecas`),
-          fetch(`${API_URL}/production`),
         ]);
 
         if (
@@ -242,8 +178,7 @@ export default function DashboardPage() {
           !respostaOrdens.ok ||
           !respostaRecentes.ok ||
           !respostaClientes.ok ||
-          !respostaPecas.ok ||
-          !respostaProducoes.ok
+          !respostaPecas.ok
         ) {
           throw new Error("Erro ao buscar dados do dashboard.");
         }
@@ -254,14 +189,12 @@ export default function DashboardPage() {
           dadosRecentes,
           dadosClientes,
           dadosPecas,
-          dadosProducoes,
         ] = await Promise.all([
           respostaResumo.json(),
           respostaOrdens.json(),
           respostaRecentes.json(),
           respostaClientes.json(),
           respostaPecas.json(),
-          respostaProducoes.json(),
         ]);
 
         setResumo(dadosResumo);
@@ -269,9 +202,6 @@ export default function DashboardPage() {
         setOrdensRecentes(dadosRecentes);
         setClientes(dadosClientes);
         setPecas(dadosPecas);
-        setProducoes(dadosProducoes);
-
-        setOrdemSelecionada(dadosRecentes[0] ?? null);
       } catch (error) {
         console.error("Erro ao carregar dashboard:", error);
         setErro("Não foi possível carregar os dados do dashboard.");
@@ -361,83 +291,6 @@ export default function DashboardPage() {
     ...dadosGrafico.map((mes) => mes.quantidade),
     1,
   );
-
-  // QUANTIDADE TOTAL DE PEÇAS DA OS
-
-  const quantidadeTotal =
-    ordemSelecionada?.pecas?.reduce(
-      (total, peca) => total + peca.quantidade,
-      0,
-    ) ?? 0;
-
-  // PRODUÇÕES DA ORDEM SELECIONADA
-
-  const producoesDaOrdem = producoes.filter(
-    (producao) => producao.itemOrdem?.ordem?.id === ordemSelecionada?.id,
-  );
-
-  const totalProduzido = producoesDaOrdem.reduce(
-    (total, producao) => total + producao.quantidadeProduzida,
-    0,
-  );
-
-  const totalAprovado = producoesDaOrdem.reduce(
-    (total, producao) => total + producao.quantidadeAprovada,
-    0,
-  );
-
-  const totalRejeitado = producoesDaOrdem.reduce(
-    (total, producao) => total + producao.quantidadeRejeitada,
-    0,
-  );
-
-  // DADOS COMPLETOS DA ORDEM
-
-  const ordemCompleta = ordens.find(
-    (ordem) => ordem.id === ordemSelecionada?.id,
-  );
-
-  // HISTÓRICO DA OS
-
-  const historico: EventoHistorico[] = [
-    ...(ordemCompleta?.dataAbertura
-      ? [
-          {
-            titulo: "Ordem de serviço criada",
-            data: ordemCompleta.dataAbertura,
-            somenteData: true,
-          },
-        ]
-      : []),
-
-    ...producoesDaOrdem.flatMap((producao) => [
-      {
-        titulo: `Produção da etapa ${producao.etapa} registrada`,
-        data: producao.createdAt,
-        somenteData: false,
-      },
-
-      ...(producao.dataInicio
-        ? [
-            {
-              titulo: `Produção ${producao.etapa} iniciada`,
-              data: producao.dataInicio,
-              somenteData: true,
-            },
-          ]
-        : []),
-
-      ...(producao.dataConclusao
-        ? [
-            {
-              titulo: `Produção ${producao.etapa} concluída`,
-              data: producao.dataConclusao,
-              somenteData: true,
-            },
-          ]
-        : []),
-    ]),
-  ].sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
 
   // RANKING DAS PEÇAS MAIS SOLICITADAS
 
@@ -592,19 +445,11 @@ export default function DashboardPage() {
         })}
       </Grid>
 
-      {/* LAYOUT PRINCIPAL */}
+      {/* CONTEÚDO PRINCIPAL - LARGURA TOTAL */}
 
-      <Grid
-        container
-        spacing={2}
-        sx={{
-          alignItems: "stretch",
-        }}
-      >
-        {/* COLUNA ESQUERDA */}
-
+      <Grid container spacing={2}>
         <Grid
-          size={{ xs: 12, lg: 8 }}
+          size={{ xs: 12 }}
           sx={{
             display: "flex",
             flexDirection: "column",
@@ -619,11 +464,13 @@ export default function DashboardPage() {
             sx={{
               borderRadius: 3,
               border: "1px solid #EAECF0",
+              width: "100%",
+              minWidth: 0,
             }}
           >
             <CardContent
               sx={{
-                p: 3,
+                p: { xs: 2, md: 3 },
                 "&:last-child": {
                   pb: 2,
                 },
@@ -745,25 +592,35 @@ export default function DashboardPage() {
                   </Typography>
                 </Box>
               ) : (
-                <TableContainer sx={{ overflowX: "auto" }}>
+                <TableContainer
+                  sx={{
+                    width: "100%",
+                    overflowX: "auto",
+                  }}
+                >
                   <Table size="small">
                     <TableHead>
                       <TableRow>
                         <TableCell>
                           <strong>Nº</strong>
                         </TableCell>
+
                         <TableCell>
                           <strong>Cliente</strong>
                         </TableCell>
+
                         <TableCell>
                           <strong>Peças</strong>
                         </TableCell>
+
                         <TableCell>
                           <strong>Qtd.</strong>
                         </TableCell>
+
                         <TableCell>
                           <strong>Prazo</strong>
                         </TableCell>
+
                         <TableCell>
                           <strong>Status</strong>
                         </TableCell>
@@ -773,23 +630,24 @@ export default function DashboardPage() {
                     <TableBody>
                       {ordensFiltradas.map((ordem) => {
                         const quantidade = (ordem.pecas ?? []).reduce(
-                          (total, peca) => total + peca.quantidade,
+                          (total, peca) =>
+                            total + (Number(peca.quantidade) || 0),
                           0,
                         );
-
-                        const selecionada = ordemSelecionada?.id === ordem.id;
 
                         return (
                           <TableRow
                             key={ordem.id}
                             hover
-                            onClick={() => setOrdemSelecionada(ordem)}
+                            onClick={() =>
+                              router.push(`/adm/ordens-servico/${ordem.id}`)
+                            }
                             sx={{
                               cursor: "pointer",
-                              backgroundColor: selecionada
-                                ? "#FFF4EE"
-                                : "transparent",
-                              "&:hover": { backgroundColor: "#FFF4EE" },
+                              transition: "background-color 0.2s",
+                              "&:hover": {
+                                backgroundColor: "#FFF4EE",
+                              },
                             }}
                           >
                             <TableCell>
@@ -817,8 +675,10 @@ export default function DashboardPage() {
 
                             <TableCell>
                               <Chip
-                                label={ordem.status.replaceAll("_", " ")}
-                                color={corStatus(ordem.status)}
+                                label={String(
+                                  ordem.status ?? "Não informado",
+                                ).replaceAll("_", " ")}
+                                color={corStatus(ordem.status ?? "")}
                                 size="small"
                               />
                             </TableCell>
@@ -840,6 +700,14 @@ export default function DashboardPage() {
                   ordens.
                 </Typography>
               )}
+
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", mt: 1 }}
+              >
+                Clique em uma ordem para visualizar seus detalhes.
+              </Typography>
             </CardContent>
           </Card>
 
@@ -850,9 +718,10 @@ export default function DashboardPage() {
             sx={{
               borderRadius: 3,
               border: "1px solid #EAECF0",
+              width: "100%",
             }}
           >
-            <CardContent sx={{ p: 3 }}>
+            <CardContent sx={{ p: { xs: 2, md: 3 } }}>
               <Typography
                 variant="h6"
                 sx={{ fontWeight: 700, color: "#17233B", mb: 1 }}
@@ -1267,455 +1136,6 @@ export default function DashboardPage() {
               </Card>
             </Grid>
           </Grid>
-        </Grid>
-
-        {/* COLUNA DIREITA: DETALHES DA OS */}
-
-        <Grid
-          size={{ xs: 12, lg: 4 }}
-          sx={{
-            display: "flex",
-            alignSelf: "stretch",
-            minWidth: 0,
-          }}
-        >
-          <Card
-            elevation={0}
-            sx={{
-              width: "100%",
-              height: "100%",
-              borderRadius: 3,
-              border: "1px solid #EAECF0",
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
-            <CardContent sx={{ p: 3 }}>
-              {/* TÍTULO E BOTÃO DE EDIÇÃO */}
-
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: 1,
-                  mb: 2,
-                }}
-              >
-                <Typography
-                  variant="h6"
-                  sx={{ fontWeight: 700, color: "#17233B" }}
-                >
-                  Detalhes da OS
-                </Typography>
-
-                <Button
-                  component={Link}
-                  href="/adm/ordens-servico"
-                  variant="contained"
-                  size="small"
-                  startIcon={<Pencil size={16} />}
-                  sx={{
-                    textTransform: "none",
-                    fontWeight: 600,
-                    borderRadius: 2,
-                    backgroundColor: "#1976D2",
-                    color: "#FFFFFF",
-                    whiteSpace: "nowrap",
-                    "&:hover": { backgroundColor: "#1565C0" },
-                  }}
-                >
-                  Editar
-                </Button>
-              </Box>
-
-              {ordemSelecionada ? (
-                <>
-                  {/* NÚMERO DA OS */}
-
-                  <Box
-                    sx={{
-                      p: 2,
-                      borderRadius: 2,
-                      backgroundColor: "#F5F6FA",
-                      mb: 2,
-                    }}
-                  >
-                    <Typography
-                      variant="h5"
-                      sx={{ fontWeight: 700, color: "#17233B" }}
-                    >
-                      OS #{ordemSelecionada.id}
-                    </Typography>
-                  </Box>
-
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                      mb: 2,
-                    }}
-                  >
-                    <Factory size={18} color="#E56A2F" />
-
-                    <Chip
-                      label={ordemSelecionada.status.replaceAll("_", " ")}
-                      color={corStatus(ordemSelecionada.status)}
-                      size="small"
-                    />
-                  </Box>
-
-                  {/* CLIENTE */}
-
-                  <Box sx={{ display: "flex", gap: 1.5, mb: 2 }}>
-                    <Building2 size={19} color="#667085" />
-
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
-                        Cliente
-                      </Typography>
-
-                      <Typography sx={{ fontWeight: 600 }}>
-                        {ordemSelecionada.cliente || "Não informado"}
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  {/* PEÇAS */}
-
-                  <Box sx={{ display: "flex", gap: 1.5, mb: 2 }}>
-                    <Package size={19} color="#667085" />
-
-                    <Box sx={{ flex: 1 }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Peças
-                      </Typography>
-
-                      {ordemSelecionada.pecas?.length > 0 ? (
-                        ordemSelecionada.pecas.map((peca, indice) => (
-                          <Box key={indice} sx={{ mt: 1 }}>
-                            <Typography sx={{ fontWeight: 600 }}>
-                              {peca.nome}
-                            </Typography>
-
-                            <Typography variant="body2" color="text.secondary">
-                              Material: {peca.material || "Não informado"}
-                            </Typography>
-
-                            <Typography variant="body2" color="text.secondary">
-                              Quantidade: {peca.quantidade}
-                            </Typography>
-                          </Box>
-                        ))
-                      ) : (
-                        <Typography variant="body2" color="text.secondary">
-                          Nenhuma peça cadastrada.
-                        </Typography>
-                      )}
-                    </Box>
-                  </Box>
-
-                  {/* PRAZO */}
-
-                  <Box sx={{ display: "flex", gap: 1.5, mb: 2 }}>
-                    <CalendarDays size={19} color="#667085" />
-
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
-                        Prazo de entrega
-                      </Typography>
-
-                      <Typography sx={{ fontWeight: 600 }}>
-                        {formatarData(ordemSelecionada.prazo)}
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  {/* QUANTIDADE TOTAL */}
-
-                  <Box sx={{ display: "flex", gap: 1.5, mb: 2 }}>
-                    <Hash size={19} color="#667085" />
-
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
-                        Quantidade total
-                      </Typography>
-
-                      <Typography sx={{ fontWeight: 600 }}>
-                        {quantidadeTotal} peças
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  {/* OBSERVAÇÕES */}
-
-                  <Box sx={{ display: "flex", gap: 1.5 }}>
-                    <NotebookPen size={19} color="#667085" />
-
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
-                        Observações
-                      </Typography>
-
-                      <Typography variant="body2">
-                        {ordemSelecionada.observacoes || "Nenhuma observação."}
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  {/* PRODUÇÃO */}
-
-                  <Box sx={{ mt: 3, pt: 3, borderTop: "1px solid #EAECF0" }}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        gap: 1,
-                        mb: 2,
-                      }}
-                    >
-                      <Typography
-                        variant="h6"
-                        sx={{ fontWeight: 700, color: "#17233B" }}
-                      >
-                        Produção
-                      </Typography>
-
-                      <Chip
-                        label={`${producoesDaOrdem.length} registros`}
-                        size="small"
-                        color="info"
-                      />
-                    </Box>
-
-                    {producoesDaOrdem.length === 0 ? (
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{ py: 2 }}
-                      >
-                        Nenhuma produção registrada para esta OS.
-                      </Typography>
-                    ) : (
-                      <TableContainer sx={{ overflowX: "auto" }}>
-                        <Table size="small">
-                          <TableHead>
-                            <TableRow>
-                              <TableCell>
-                                <strong>Etapa</strong>
-                              </TableCell>
-
-                              <TableCell>
-                                <strong>Operador</strong>
-                              </TableCell>
-
-                              <TableCell>
-                                <strong>Início</strong>
-                              </TableCell>
-
-                              <TableCell>
-                                <strong>Conclusão</strong>
-                              </TableCell>
-
-                              <TableCell>
-                                <strong>Qtd.</strong>
-                              </TableCell>
-
-                              <TableCell>
-                                <strong>Status</strong>
-                              </TableCell>
-                            </TableRow>
-                          </TableHead>
-
-                          <TableBody>
-                            {producoesDaOrdem.map((producao) => (
-                              <TableRow key={producao.id}>
-                                <TableCell>
-                                  {producao.etapa.replaceAll("_", " ")}
-                                </TableCell>
-
-                                <TableCell>
-                                  {producao.operador?.name || "Não informado"}
-                                </TableCell>
-
-                                <TableCell>
-                                  {formatarData(producao.dataInicio)}
-                                </TableCell>
-
-                                <TableCell>
-                                  {formatarData(producao.dataConclusao)}
-                                </TableCell>
-
-                                <TableCell>
-                                  {producao.quantidadeProduzida}/
-                                  {producao.itemOrdem.quantidade}
-                                </TableCell>
-
-                                <TableCell>
-                                  <Chip
-                                    label={producao.status.replaceAll("_", " ")}
-                                    size="small"
-                                    color={corStatusProducao(producao.status)}
-                                  />
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
-                    )}
-                  </Box>
-
-                  {/* RESULTADO DA PRODUÇÃO */}
-
-                  <Box sx={{ mt: 3, pt: 3, borderTop: "1px solid #EAECF0" }}>
-                    <Typography
-                      variant="subtitle1"
-                      sx={{ fontWeight: 700, color: "#17233B", mb: 2 }}
-                    >
-                      Resultado da produção
-                    </Typography>
-
-                    <Grid container spacing={1}>
-                      <Grid size={{ xs: 4 }}>
-                        <Box
-                          sx={{
-                            p: 1.5,
-                            borderRadius: 2,
-                            backgroundColor: "#EAF7F0",
-                            textAlign: "center",
-                          }}
-                        >
-                          <Typography variant="caption" color="success.dark">
-                            Aprovadas
-                          </Typography>
-
-                          <Typography
-                            variant="h5"
-                            sx={{ fontWeight: 700, color: "#17233B" }}
-                          >
-                            {totalAprovado}
-                          </Typography>
-                        </Box>
-                      </Grid>
-
-                      <Grid size={{ xs: 4 }}>
-                        <Box
-                          sx={{
-                            p: 1.5,
-                            borderRadius: 2,
-                            backgroundColor: "#FDEEEE",
-                            textAlign: "center",
-                          }}
-                        >
-                          <Typography variant="caption" color="error.dark">
-                            Rejeitadas
-                          </Typography>
-
-                          <Typography
-                            variant="h5"
-                            sx={{ fontWeight: 700, color: "error.dark" }}
-                          >
-                            {totalRejeitado}
-                          </Typography>
-                        </Box>
-                      </Grid>
-
-                      <Grid size={{ xs: 4 }}>
-                        <Box
-                          sx={{
-                            p: 1.5,
-                            borderRadius: 2,
-                            backgroundColor: "#F0F2F6",
-                            textAlign: "center",
-                          }}
-                        >
-                          <Typography variant="caption" color="text.secondary">
-                            Produzidas
-                          </Typography>
-
-                          <Typography
-                            variant="h5"
-                            sx={{ fontWeight: 700, color: "success.dark" }}
-                          >
-                            {totalProduzido}
-                          </Typography>
-                        </Box>
-                      </Grid>
-                    </Grid>
-                  </Box>
-
-                  {/* HISTÓRICO DA OS */}
-
-                  <Box sx={{ mt: 3, pt: 3, borderTop: "1px solid #EAECF0" }}>
-                    <Typography
-                      variant="h6"
-                      sx={{ fontWeight: 700, color: "#17233B", mb: 2 }}
-                    >
-                      Histórico da OS
-                    </Typography>
-
-                    {historico.length === 0 ? (
-                      <Typography variant="body2" color="text.secondary">
-                        Nenhum acontecimento registrado.
-                      </Typography>
-                    ) : (
-                      <Box
-                        sx={{
-                          position: "relative",
-                          pl: 2.5,
-                          borderLeft: "2px solid #E5E7EB",
-                        }}
-                      >
-                        {historico.map((evento, indice) => (
-                          <Box
-                            key={`${evento.titulo}-${indice}`}
-                            sx={{
-                              position: "relative",
-                              pb: indice === historico.length - 1 ? 0 : 2.5,
-                              "&::before": {
-                                content: '""',
-                                position: "absolute",
-                                width: 10,
-                                height: 10,
-                                borderRadius: "50%",
-                                backgroundColor: "#E56A2F",
-                                left: -25,
-                                top: 5,
-                                border: "2px solid white",
-                              },
-                            }}
-                          >
-                            <Typography
-                              variant="body2"
-                              sx={{ fontWeight: 600, color: "#17233B" }}
-                            >
-                              {evento.titulo}
-                            </Typography>
-
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                            >
-                              {evento.somenteData
-                                ? formatarData(evento.data)
-                                : formatarDataHora(evento.data)}
-                            </Typography>
-                          </Box>
-                        ))}
-                      </Box>
-                    )}
-                  </Box>
-                </>
-              ) : (
-                <Typography color="text.secondary">
-                  Selecione uma ordem de serviço para visualizar os detalhes.
-                </Typography>
-              )}
-            </CardContent>
-          </Card>
         </Grid>
       </Grid>
     </Box>

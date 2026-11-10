@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+
 import {
   Alert,
   Box,
@@ -20,12 +22,8 @@ import {
 } from "@mui/material";
 
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
-import {
-  Search,
-  Plus,
-  Pencil,
-  Trash2,
-} from "lucide-react";
+
+import { Search, Plus, Pencil, Trash2, ClipboardList} from "lucide-react";
 
 import ModalNovaOrdem from "./ModalNovaOrdem";
 
@@ -59,6 +57,8 @@ async function obterErro(resposta: Response, mensagemPadrao: string) {
 }
 
 export default function OrdensServico() {
+  const router = useRouter();
+
   const [ordens, setOrdens] = useState<Ordem[]>([]);
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("");
@@ -184,6 +184,10 @@ export default function OrdensServico() {
     setModalAberto(true);
   }
 
+  function abrirDetalhes(ordem: Ordem) {
+    router.push(`/adm/ordens-servico/${ordem.id}`);
+  }
+
   function fecharModal() {
     setModalAberto(false);
     setOrdemSelecionadaId(null);
@@ -196,12 +200,9 @@ export default function OrdensServico() {
       setExcluindo(true);
       setErro("");
 
-      const resposta = await fetch(
-        `${API_URL}/orders/${ordemParaExcluir.id}`,
-        {
-          method: "DELETE",
-        },
-      );
+      const resposta = await fetch(`${API_URL}/orders/${ordemParaExcluir.id}`, {
+        method: "DELETE",
+      });
 
       if (!resposta.ok) {
         throw new Error(
@@ -285,39 +286,82 @@ export default function OrdensServico() {
     {
       field: "acoes",
       headerName: "Ações",
-      width: 110,
+      width: 170,
       sortable: false,
       filterable: false,
       disableColumnMenu: true,
+      align: "center",
+      headerAlign: "center",
       renderCell: (params) => (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-          <Tooltip title="Editar ordem">
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 1,
+            height: "100%",
+          }}
+        >
+          {/* Visualizar */}
+          <Tooltip title="Visualizar ordem" arrow>
             <IconButton
-              size="small"
-              onClick={() => abrirEdicao(params.row)}
+              onClick={() => abrirDetalhes(params.row)}
               sx={{
-                color: "#2563eb",
+                width: 34,
+                height: 34,
+                borderRadius: "8px",
+                color: "#475569",
+                backgroundColor: "#f1f5f9",
+                transition: "all 0.2s ease",
                 "&:hover": {
-                  backgroundColor: "#eff6ff",
+                  color: "#1e293b",
+                  backgroundColor: "#e2e8f0",
                 },
               }}
             >
-              <Pencil size={18} />
+              <ClipboardList size={17} strokeWidth={2} />
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Excluir ordem">
+          {/* Editar */}
+          <Tooltip title="Editar ordem" arrow>
             <IconButton
-              size="small"
-              onClick={() => setOrdemParaExcluir(params.row)}
+              onClick={() => abrirEdicao(params.row)}
               sx={{
-                color: "#dc2626",
+                width: 34,
+                height: 34,
+                borderRadius: "8px",
+                color: "#e04f11",
+                backgroundColor: "#fff1e9",
+                transition: "all 0.2s ease",
                 "&:hover": {
-                  backgroundColor: "#fef2f2",
+                  color: "#c9430d",
+                  backgroundColor: "#ffe1d1",
                 },
               }}
             >
-              <Trash2 size={18} />
+              <Pencil size={17} strokeWidth={2} />
+            </IconButton>
+          </Tooltip>
+
+          {/* Excluir */}
+          <Tooltip title="Excluir ordem" arrow>
+            <IconButton
+              onClick={() => setOrdemParaExcluir(params.row)}
+              sx={{
+                width: 34,
+                height: 34,
+                borderRadius: "8px",
+                color: "#dc2626",
+                backgroundColor: "#fef2f2",
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  color: "#b91c1c",
+                  backgroundColor: "#fee2e2",
+                },
+              }}
+            >
+              <Trash2 size={17} strokeWidth={2} />
             </IconButton>
           </Tooltip>
         </Box>
@@ -538,11 +582,7 @@ export default function OrdensServico() {
             ?
           </Typography>
 
-          <Typography
-            variant="body2"
-            color="error"
-            sx={{ mt: 1.5 }}
-          >
+          <Typography variant="body2" color="error" sx={{ mt: 1.5 }}>
             Essa ação também excluirá os itens vinculados a essa ordem.
           </Typography>
         </DialogContent>
@@ -582,7 +622,9 @@ export default function OrdensServico() {
         }}
       >
         <Alert
-          severity={mensagem.toLowerCase().includes("sucesso") ? "success" : "error"}
+          severity={
+            mensagem.toLowerCase().includes("sucesso") ? "success" : "error"
+          }
           onClose={() => setSnackbarAberto(false)}
           variant="filled"
         >

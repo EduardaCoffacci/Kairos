@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Alert,
   Box,
   Button,
@@ -16,6 +19,7 @@ import {
   DialogTitle,
   IconButton,
   InputAdornment,
+  LinearProgress,
   MenuItem,
   Snackbar,
   Table,
@@ -25,6 +29,7 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 
@@ -34,23 +39,21 @@ import {
   Clock3,
   PackageCheck,
   Pencil,
-  Plus,
   Search,
   Trash2,
+  ChevronDown,
+  RefreshCw,
+  Factory,
+  AlertCircle,
+  CalendarDays,
+  Package,
+  Eye,
+  FilterX,
 } from "lucide-react";
 
-const API_URL = "http://localhost:3001";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 type StatusProducao = "PENDENTE" | "EM_ANDAMENTO" | "CONCLUIDA";
-
-type EtapaProducao =
-  | "CORTE"
-  | "TORNEAMENTO"
-  | "FRESAGEM"
-  | "RETIFICA"
-  | "ROSQUEAMENTO"
-  | "PLAINAMENTO"
-  | "ACABAMENTO";
 
 interface Cliente {
   id: number;
@@ -78,15 +81,23 @@ interface ItemOrdem {
 interface Operador {
   id: number;
   name: string;
-  phone: string;
+  phone?: string;
+  active: boolean;
+}
+
+interface ProcessoUsinagem {
+  id: number;
+  name: string;
+  description?: string;
   active: boolean;
 }
 
 interface Producao {
   id: number;
   itemOrdem: ItemOrdem;
-  operador: Operador;
-  etapa: EtapaProducao;
+  process: ProcessoUsinagem;
+  operador?: Operador | null;
+  sequence: number;
   status: StatusProducao;
   dataInicio: string | null;
   dataConclusao: string | null;
@@ -97,9 +108,7 @@ interface Producao {
 }
 
 interface FormularioProducao {
-  itemOrdemId: string;
   operadorId: string;
-  etapa: EtapaProducao;
   status: StatusProducao;
   quantidadeProduzida: string;
   quantidadeAprovada: string;
@@ -107,31 +116,46 @@ interface FormularioProducao {
   observacoes: string;
 }
 
-const etapas: { value: EtapaProducao; label: string }[] = [
-  { value: "CORTE", label: "Corte" },
-  { value: "TORNEAMENTO", label: "Torneamento" },
-  { value: "FRESAGEM", label: "Fresagem" },
-  { value: "RETIFICA", label: "Retífica" },
-  { value: "ROSQUEAMENTO", label: "Rosqueamento" },
-  { value: "PLAINAMENTO", label: "Plainamento" },
-  { value: "ACABAMENTO", label: "Acabamento" },
-];
+interface ItemAgrupado {
+  item: ItemOrdem;
+  producoes: Producao[];
+}
 
-const statusOptions: { value: StatusProducao; label: string }[] = [
+interface OrdemAgrupada {
+  ordemId: number;
+  ordem: Ordem;
+  itens: ItemAgrupado[];
+  producoes: Producao[];
+}
+
+const statusOptions: {
+  value: StatusProducao;
+  label: string;
+}[] = [
   { value: "PENDENTE", label: "Pendente" },
   { value: "EM_ANDAMENTO", label: "Em andamento" },
   { value: "CONCLUIDA", label: "Concluída" },
 ];
 
 const formularioInicial: FormularioProducao = {
-  itemOrdemId: "",
   operadorId: "",
-  etapa: "CORTE",
   status: "PENDENTE",
   quantidadeProduzida: "0",
   quantidadeAprovada: "0",
   quantidadeRejeitada: "0",
   observacoes: "",
+};
+
+const cores = {
+  texto: "#172B4D",
+  secundario: "#667085",
+  borda: "#E6EAF0",
+  fundo: "#F6F8FB",
+  laranja: "#E56A2F",
+  verde: "#16803C",
+  azul: "#2563EB",
+  amarelo: "#B76E00",
+  vermelho: "#D14343",
 };
 
 function formatarData(data?: string | null) {
@@ -146,10 +170,6 @@ function formatarData(data?: string | null) {
   return dataFormatada.toLocaleDateString("pt-BR");
 }
 
-function nomeEtapa(etapa: EtapaProducao) {
-  return etapas.find((item) => item.value === etapa)?.label ?? etapa;
-}
-
 function nomeStatus(status: StatusProducao) {
   return statusOptions.find((item) => item.value === status)?.label ?? status;
 }
@@ -159,19 +179,22 @@ function corStatus(status: StatusProducao) {
     case "PENDENTE":
       return {
         backgroundColor: "#FFF4E5",
-        color: "#B76E00",
+        color: "#A15C00",
+        border: "1px solid #F5D9AE",
       };
 
     case "EM_ANDAMENTO":
       return {
-        backgroundColor: "#E8F1FF",
-        color: "#2563EB",
+        backgroundColor: "#EAF2FF",
+        color: "#245BC5",
+        border: "1px solid #C9DBFF",
       };
 
     case "CONCLUIDA":
       return {
-        backgroundColor: "#E7F7ED",
+        backgroundColor: "#E8F6ED",
         color: "#16803C",
+        border: "1px solid #C5E8D0",
       };
   }
 }
@@ -188,15 +211,104 @@ async function lerResposta(resposta: Response) {
   }
 }
 
+function CartaoIndicador({
+  titulo,
+  valor,
+  icone,
+  cor,
+  fundo,
+  descricao,
+}: {
+  titulo: string;
+  valor: number;
+  icone: React.ReactNode;
+  cor: string;
+  fundo: string;
+  descricao: string;
+}) {
+  return (
+    <Card
+      elevation={0}
+      sx={{
+        height: "100%",
+        border: `1px solid ${cores.borda}`,
+        borderRadius: 3,
+        transition: "all .2s ease",
+        "&:hover": {
+          borderColor: "#CBD3DF",
+          transform: "translateY(-2px)",
+          boxShadow: "0 8px 22px rgba(16,24,40,.05)",
+        },
+      }}
+    >
+      <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            gap: 2,
+          }}
+        >
+          <Box>
+            <Typography
+              variant="body2"
+              sx={{ color: cores.secundario, fontWeight: 500 }}
+            >
+              {titulo}
+            </Typography>
+
+            <Typography
+              variant="h4"
+              sx={{
+                mt: 1,
+                fontWeight: 750,
+                letterSpacing: "-1px",
+                color: cores.texto,
+              }}
+            >
+              {valor}
+            </Typography>
+
+            <Typography
+              variant="caption"
+              sx={{ color: cores.secundario, display: "block", mt: 0.5 }}
+            >
+              {descricao}
+            </Typography>
+          </Box>
+
+          <Box
+            sx={{
+              width: 46,
+              height: 46,
+              borderRadius: 2.5,
+              backgroundColor: fundo,
+              color: cor,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            {icone}
+          </Box>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function ProducaoPage() {
   const [producoes, setProducoes] = useState<Producao[]>([]);
-  const [itensOrdem, setItensOrdem] = useState<ItemOrdem[]>([]);
   const [operadores, setOperadores] = useState<Operador[]>([]);
 
   const [carregando, setCarregando] = useState(true);
+  const [atualizando, setAtualizando] = useState(false);
+
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("TODOS");
-  const [filtroEtapa, setFiltroEtapa] = useState("TODAS");
+  const [filtroProcesso, setFiltroProcesso] = useState("TODOS");
 
   const [formulario, setFormulario] =
     useState<FormularioProducao>(formularioInicial);
@@ -204,7 +316,6 @@ export default function ProducaoPage() {
   const [producaoSelecionada, setProducaoSelecionada] =
     useState<Producao | null>(null);
 
-  const [dialogCadastro, setDialogCadastro] = useState(false);
   const [dialogEdicao, setDialogEdicao] = useState(false);
   const [dialogExclusao, setDialogExclusao] = useState(false);
   const [dialogVisualizacao, setDialogVisualizacao] = useState(false);
@@ -224,28 +335,21 @@ export default function ProducaoPage() {
   }
 
   async function buscarDados() {
-    try {
-      const [respostaProducoes, respostaItens, respostaOperadores] =
-        await Promise.all([
-          fetch(`${API_URL}/production`),
-          fetch(`${API_URL}/order-item`),
-          fetch(`${API_URL}/operators`),
-        ]);
+    setAtualizando(true);
 
-      const [dadosProducoes, dadosItens, dadosOperadores] = await Promise.all([
+    try {
+      const [respostaProducoes, respostaOperadores] = await Promise.all([
+        fetch(`${API_URL}/production`),
+        fetch(`${API_URL}/operators`),
+      ]);
+
+      const [dadosProducoes, dadosOperadores] = await Promise.all([
         lerResposta(respostaProducoes),
-        lerResposta(respostaItens),
         lerResposta(respostaOperadores),
       ]);
 
-      console.log("Operadores recebidos da API:", dadosOperadores);
-
       if (!respostaProducoes.ok) {
         throw new Error("Não foi possível carregar as produções.");
-      }
-
-      if (!respostaItens.ok) {
-        throw new Error("Não foi possível carregar os itens das ordens.");
       }
 
       if (!respostaOperadores.ok) {
@@ -253,7 +357,6 @@ export default function ProducaoPage() {
       }
 
       setProducoes(Array.isArray(dadosProducoes) ? dadosProducoes : []);
-      setItensOrdem(Array.isArray(dadosItens) ? dadosItens : []);
       setOperadores(Array.isArray(dadosOperadores) ? dadosOperadores : []);
     } catch (error) {
       mostrarMensagem(
@@ -262,14 +365,58 @@ export default function ProducaoPage() {
       );
     } finally {
       setCarregando(false);
+      setAtualizando(false);
     }
   }
-  useEffect(() => {
-    const carregar = async () => {
-      await buscarDados();
-    };
 
-    carregar();
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function carregarDados() {
+      try {
+        const [respostaProducoes, respostaOperadores] = await Promise.all([
+          fetch(`${API_URL}/production`, {
+            signal: controller.signal,
+          }),
+          fetch(`${API_URL}/operators`, {
+            signal: controller.signal,
+          }),
+        ]);
+
+        const [dadosProducoes, dadosOperadores] = await Promise.all([
+          lerResposta(respostaProducoes),
+          lerResposta(respostaOperadores),
+        ]);
+
+        if (!respostaProducoes.ok) {
+          throw new Error("Não foi possível carregar as produções.");
+        }
+
+        if (!respostaOperadores.ok) {
+          throw new Error("Não foi possível carregar os operadores.");
+        }
+
+        setProducoes(Array.isArray(dadosProducoes) ? dadosProducoes : []);
+        setOperadores(Array.isArray(dadosOperadores) ? dadosOperadores : []);
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") {
+          return;
+        }
+
+        mostrarMensagem(
+          error instanceof Error ? error.message : "Erro ao carregar os dados.",
+          "error",
+        );
+      } finally {
+        if (!controller.signal.aborted) {
+          setCarregando(false);
+        }
+      }
+    }
+
+    carregarDados();
+
+    return () => controller.abort();
   }, []);
 
   function atualizarCampo<K extends keyof FormularioProducao>(
@@ -282,28 +429,15 @@ export default function ProducaoPage() {
     }));
   }
 
-  function abrirCadastro() {
-    setFormulario(formularioInicial);
-    setProducaoSelecionada(null);
-    setDialogCadastro(true);
-  }
-
-  function fecharCadastro() {
-    setDialogCadastro(false);
-    setFormulario(formularioInicial);
-  }
-
   function abrirEdicao(producao: Producao) {
     setProducaoSelecionada(producao);
 
     setFormulario({
-      itemOrdemId: String(producao.itemOrdem?.id ?? ""),
       operadorId: String(producao.operador?.id ?? ""),
-      etapa: producao.etapa,
       status: producao.status,
-      quantidadeProduzida: String(producao.quantidadeProduzida),
-      quantidadeAprovada: String(producao.quantidadeAprovada),
-      quantidadeRejeitada: String(producao.quantidadeRejeitada),
+      quantidadeProduzida: String(producao.quantidadeProduzida ?? 0),
+      quantidadeAprovada: String(producao.quantidadeAprovada ?? 0),
+      quantidadeRejeitada: String(producao.quantidadeRejeitada ?? 0),
       observacoes: producao.observacoes ?? "",
     });
 
@@ -317,16 +451,6 @@ export default function ProducaoPage() {
   }
 
   function validarFormulario() {
-    if (!formulario.itemOrdemId) {
-      mostrarMensagem("Selecione o item da ordem de serviço.", "error");
-      return false;
-    }
-
-    if (!formulario.operadorId) {
-      mostrarMensagem("Selecione um operador.", "error");
-      return false;
-    }
-
     const produzida = Number(formulario.quantidadeProduzida);
     const aprovada = Number(formulario.quantidadeAprovada);
     const rejeitada = Number(formulario.quantidadeRejeitada);
@@ -356,9 +480,9 @@ export default function ProducaoPage() {
 
   function montarDadosFormulario() {
     return {
-      itemOrdemId: Number(formulario.itemOrdemId),
-      operadorId: Number(formulario.operadorId),
-      etapa: formulario.etapa,
+      ...(formulario.operadorId
+        ? { operadorId: Number(formulario.operadorId) }
+        : {}),
       status: formulario.status,
       quantidadeProduzida: Number(formulario.quantidadeProduzida),
       quantidadeAprovada: Number(formulario.quantidadeAprovada),
@@ -367,45 +491,8 @@ export default function ProducaoPage() {
     };
   }
 
-  async function cadastrarProducao() {
-    if (!validarFormulario()) return;
-
-    setProcessando(true);
-
-    try {
-      const resposta = await fetch(`${API_URL}/production`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(montarDadosFormulario()),
-      });
-
-      const dados = await lerResposta(resposta);
-
-      if (!resposta.ok) {
-        throw new Error(
-          dados.message || "Não foi possível cadastrar a produção.",
-        );
-      }
-
-      fecharCadastro();
-      await buscarDados();
-
-      mostrarMensagem("Produção cadastrada com sucesso.", "success");
-    } catch (error) {
-      mostrarMensagem(
-        error instanceof Error ? error.message : "Erro ao cadastrar produção.",
-        "error",
-      );
-    } finally {
-      setProcessando(false);
-    }
-  }
-
   async function atualizarProducao() {
     if (!producaoSelecionada) return;
-
     if (!validarFormulario()) return;
 
     setProcessando(true);
@@ -494,6 +581,20 @@ export default function ProducaoPage() {
     setDialogVisualizacao(true);
   }
 
+  function limparFiltros() {
+    setBusca("");
+    setFiltroStatus("TODOS");
+    setFiltroProcesso("TODOS");
+  }
+
+  const processos = useMemo(() => {
+    const nomes = producoes
+      .map((producao) => producao.process?.name)
+      .filter((nome): nome is string => Boolean(nome));
+
+    return [...new Set(nomes)].sort((a, b) => a.localeCompare(b));
+  }, [producoes]);
+
   const producoesFiltradas = useMemo(() => {
     return producoes.filter((producao) => {
       const textoBusca = busca.toLowerCase();
@@ -503,6 +604,8 @@ export default function ProducaoPage() {
         String(producao.itemOrdem?.ordem?.id ?? ""),
         producao.itemOrdem?.ordem?.cliente?.nome ?? "",
         producao.itemOrdem?.peca?.nome ?? "",
+        producao.process?.name ?? "",
+        String(producao.sequence ?? ""),
         producao.operador?.name ?? "",
       ]
         .join(" ")
@@ -512,626 +615,1164 @@ export default function ProducaoPage() {
       const correspondeStatus =
         filtroStatus === "TODOS" || producao.status === filtroStatus;
 
-      const correspondeEtapa =
-        filtroEtapa === "TODAS" || producao.etapa === filtroEtapa;
+      const correspondeProcesso =
+        filtroProcesso === "TODOS" || producao.process?.name === filtroProcesso;
 
-      return correspondeBusca && correspondeStatus && correspondeEtapa;
+      return correspondeBusca && correspondeStatus && correspondeProcesso;
     });
-  }, [producoes, busca, filtroStatus, filtroEtapa]);
+  }, [producoes, busca, filtroStatus, filtroProcesso]);
+
+  const ordensAgrupadas = useMemo(() => {
+    const mapaOrdens = new Map<number, OrdemAgrupada>();
+
+    producoesFiltradas.forEach((producao) => {
+      const ordem = producao.itemOrdem?.ordem;
+      const item = producao.itemOrdem;
+
+      if (!ordem || !item) return;
+
+      let grupoOrdem = mapaOrdens.get(ordem.id);
+
+      if (!grupoOrdem) {
+        grupoOrdem = {
+          ordemId: ordem.id,
+          ordem,
+          itens: [],
+          producoes: [],
+        };
+
+        mapaOrdens.set(ordem.id, grupoOrdem);
+      }
+
+      grupoOrdem.producoes.push(producao);
+
+      let grupoItem = grupoOrdem.itens.find(
+        (grupo) => grupo.item.id === item.id,
+      );
+
+      if (!grupoItem) {
+        grupoItem = {
+          item,
+          producoes: [],
+        };
+
+        grupoOrdem.itens.push(grupoItem);
+      }
+
+      grupoItem.producoes.push(producao);
+    });
+
+    return Array.from(mapaOrdens.values())
+      .map((ordem) => ({
+        ...ordem,
+        itens: ordem.itens
+          .map((item) => ({
+            ...item,
+            producoes: [...item.producoes].sort(
+              (a, b) => a.sequence - b.sequence,
+            ),
+          }))
+          .sort((a, b) => a.item.id - b.item.id),
+      }))
+      .sort((a, b) => b.ordemId - a.ordemId);
+  }, [producoesFiltradas]);
 
   const indicadores = useMemo(() => {
+    const ordens = new Set(
+      producoes
+        .map((item) => item.itemOrdem?.ordem?.id)
+        .filter((id): id is number => id !== undefined),
+    );
+
     return {
+      ordens: ordens.size,
+      pendentes: producoes.filter((item) => item.status === "PENDENTE").length,
       emAndamento: producoes.filter((item) => item.status === "EM_ANDAMENTO")
         .length,
-
       concluidas: producoes.filter((item) => item.status === "CONCLUIDA")
         .length,
-
-      aprovadas: producoes.reduce(
-        (total, item) => total + Number(item.quantidadeAprovada || 0),
-        0,
-      ),
-
-      rejeitadas: producoes.reduce(
-        (total, item) => total + Number(item.quantidadeRejeitada || 0),
-        0,
-      ),
     };
   }, [producoes]);
 
-  const itemSelecionado = itensOrdem.find(
-    (item) => item.id === Number(formulario.itemOrdemId),
-  );
-
   const producaoConcluida = producaoSelecionada?.status === "CONCLUIDA";
+
+  const possuiFiltros =
+    busca.trim() !== "" ||
+    filtroStatus !== "TODOS" ||
+    filtroProcesso !== "TODOS";
 
   return (
     <Box
       sx={{
-        p: { xs: 2, md: 4 },
-        backgroundColor: "#F5F6FA",
         minHeight: "100vh",
+        backgroundColor: cores.fundo,
+        p: { xs: 2, sm: 3, lg: 4 },
       }}
     >
-      {/* Cabeçalho */}
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: { xs: "flex-start", sm: "center" },
-          justifyContent: "space-between",
-          flexDirection: { xs: "column", sm: "row" },
-          gap: 2,
-          mb: 4,
-        }}
-      >
-        <Box>
-          <Typography
-            variant="h4"
-            sx={{
-              fontWeight: 700,
-              color: "#17233B",
-            }}
-          >
-            Produção
-          </Typography>
-
-          <Typography color="text.secondary" sx={{ mt: 1 }}>
-            Acompanhe e gerencie as etapas de produção das ordens de serviço.
-          </Typography>
-        </Box>
-
-        <Button
-          variant="contained"
-          startIcon={<Plus size={18} />}
-          onClick={abrirCadastro}
+      <Box sx={{ maxWidth: 1600, mx: "auto" }}>
+        {/* Cabeçalho */}
+        <Box
           sx={{
-            backgroundColor: "#E56A2F",
-            textTransform: "none",
-            fontWeight: 600,
-            borderRadius: 2,
-            px: 2.5,
-            "&:hover": {
-              backgroundColor: "#CF5D27",
-            },
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: { xs: "flex-start", sm: "center" },
+            flexDirection: { xs: "column", sm: "row" },
+            gap: 2,
+            mb: 3.5,
           }}
         >
-          Nova produção
-        </Button>
-      </Box>
+          <Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
+              <Box
+                sx={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: 2.5,
+                  backgroundColor: "#FFF0E9",
+                  color: cores.laranja,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Factory size={23} />
+              </Box>
 
-      {/* Indicadores */}
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: {
-            xs: "1fr",
-            sm: "repeat(2, 1fr)",
-            lg: "repeat(4, 1fr)",
-          },
-          gap: 2,
-          mb: 4,
-        }}
-      >
+              <Typography
+                variant="h4"
+                sx={{
+                  fontWeight: 750,
+                  color: cores.texto,
+                  letterSpacing: "-1px",
+                }}
+              >
+                Produção
+              </Typography>
+            </Box>
+
+            <Typography variant="body2" sx={{ color: cores.secundario, mt: 1 }}>
+              Acompanhe as ordens de serviço e o andamento dos processos de
+              usinagem.
+            </Typography>
+          </Box>
+
+          <Button
+            variant="outlined"
+            startIcon={
+              <RefreshCw
+                size={17}
+                className={atualizando ? "animate-spin" : ""}
+              />
+            }
+            onClick={buscarDados}
+            disabled={atualizando || carregando}
+            sx={{
+              textTransform: "none",
+              fontWeight: 600,
+              borderColor: cores.borda,
+              color: cores.texto,
+              backgroundColor: "#FFFFFF",
+              borderRadius: 2,
+              px: 2,
+              py: 1,
+              "&:hover": {
+                borderColor: "#C5CCD7",
+                backgroundColor: "#FAFBFC",
+              },
+            }}
+          >
+            Atualizar dados
+          </Button>
+        </Box>
+
+        {/* Indicadores */}
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr",
+              sm: "repeat(2, 1fr)",
+              xl: "repeat(4, 1fr)",
+            },
+            gap: 2,
+            mb: 3.5,
+          }}
+        >
+          <CartaoIndicador
+            titulo="Ordens com produção"
+            valor={indicadores.ordens}
+            descricao="Ordens com etapas cadastradas"
+            icone={<ClipboardList size={23} />}
+            cor="#344B70"
+            fundo="#EDF2FA"
+          />
+
+          <CartaoIndicador
+            titulo="Etapas pendentes"
+            valor={indicadores.pendentes}
+            descricao="Aguardando início"
+            icone={<Clock3 size={23} />}
+            cor={cores.amarelo}
+            fundo="#FFF5E8"
+          />
+
+          <CartaoIndicador
+            titulo="Em andamento"
+            valor={indicadores.emAndamento}
+            descricao="Etapas em execução"
+            icone={<PackageCheck size={23} />}
+            cor={cores.azul}
+            fundo="#EAF2FF"
+          />
+
+          <CartaoIndicador
+            titulo="Etapas concluídas"
+            valor={indicadores.concluidas}
+            descricao="Processos finalizados"
+            icone={<CheckCircle2 size={23} />}
+            cor={cores.verde}
+            fundo="#E8F6ED"
+          />
+        </Box>
+
+        {/* Conteúdo principal */}
         <Card
           elevation={0}
-          sx={{ borderRadius: 3, border: "1px solid #EAECF0" }}
+          sx={{
+            border: `1px solid ${cores.borda}`,
+            borderRadius: 3,
+            overflow: "hidden",
+          }}
         >
-          <CardContent sx={{ p: 2.5 }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Box>
-                <Typography color="text.secondary" variant="body2">
-                  Em andamento
-                </Typography>
+          {/* Título da listagem */}
+          <Box
+            sx={{
+              px: { xs: 2, md: 3 },
+              py: 2.5,
+              borderBottom: `1px solid ${cores.borda}`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 2,
+              flexWrap: "wrap",
+            }}
+          >
+            <Box>
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 700, color: cores.texto }}
+              >
+                Ordens de serviço
+              </Typography>
 
-                <Typography
-                  variant="h4"
-                  sx={{ mt: 1, fontWeight: 700, color: "#17233B" }}
-                >
-                  {indicadores.emAndamento}
-                </Typography>
-              </Box>
-
-              <Box sx={{ color: "#2563EB" }}>
-                <Clock3 size={25} />
-              </Box>
+              <Typography
+                variant="body2"
+                sx={{ color: cores.secundario, mt: 0.3 }}
+              >
+                Consulte as peças e acompanhe cada etapa da produção.
+              </Typography>
             </Box>
-          </CardContent>
-        </Card>
 
-        <Card
-          elevation={0}
-          sx={{ borderRadius: 3, border: "1px solid #EAECF0" }}
-        >
-          <CardContent sx={{ p: 2.5 }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Box>
-                <Typography color="text.secondary" variant="body2">
-                  Produções concluídas
-                </Typography>
+            {!carregando && (
+              <Chip
+                label={`${producoesFiltradas.length} ${
+                  producoesFiltradas.length === 1 ? "etapa" : "etapas"
+                }`}
+                size="small"
+                sx={{
+                  backgroundColor: "#F0F2F5",
+                  color: cores.texto,
+                  fontWeight: 600,
+                }}
+              />
+            )}
+          </Box>
 
-                <Typography
-                  variant="h4"
-                  sx={{ mt: 1, fontWeight: 700, color: "#17233B" }}
-                >
-                  {indicadores.concluidas}
-                </Typography>
-              </Box>
-
-              <Box sx={{ color: "#16803C" }}>
-                <CheckCircle2 size={25} />
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
-
-        <Card
-          elevation={0}
-          sx={{ borderRadius: 3, border: "1px solid #EAECF0" }}
-        >
-          <CardContent sx={{ p: 2.5 }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Box>
-                <Typography color="text.secondary" variant="body2">
-                  Quantidade aprovada
-                </Typography>
-
-                <Typography
-                  variant="h4"
-                  sx={{ mt: 1, fontWeight: 700, color: "#17233B" }}
-                >
-                  {indicadores.aprovadas}
-                </Typography>
-              </Box>
-
-              <Box sx={{ color: "#16803C" }}>
-                <PackageCheck size={25} />
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
-
-        <Card
-          elevation={0}
-          sx={{ borderRadius: 3, border: "1px solid #EAECF0" }}
-        >
-          <CardContent sx={{ p: 2.5 }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Box>
-                <Typography color="text.secondary" variant="body2">
-                  Quantidade rejeitada
-                </Typography>
-
-                <Typography
-                  variant="h4"
-                  sx={{ mt: 1, fontWeight: 700, color: "#17233B" }}
-                >
-                  {indicadores.rejeitadas}
-                </Typography>
-              </Box>
-
-              <Box sx={{ color: "#D14343" }}>
-                <ClipboardList size={25} />
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
-      </Box>
-
-      {/* Tabela */}
-      <Card
-        elevation={0}
-        sx={{
-          borderRadius: 3,
-          border: "1px solid #EAECF0",
-        }}
-      >
-        <CardContent sx={{ p: 0 }}>
           {carregando ? (
             <Box
               sx={{
                 display: "flex",
+                flexDirection: "column",
                 justifyContent: "center",
                 alignItems: "center",
-                minHeight: 250,
+                minHeight: 300,
+                gap: 2,
               }}
             >
-              <CircularProgress />
+              <CircularProgress size={30} />
+              <Typography variant="body2" color="text.secondary">
+                Carregando dados da produção...
+              </Typography>
             </Box>
           ) : (
             <>
               {/* Busca e filtros */}
               <Box
                 sx={{
-                  p: 3,
-                  borderBottom: "1px solid #EAECF0",
-                  display: "flex",
-                  flexDirection: { xs: "column", md: "row" },
-                  gap: 2,
+                  p: { xs: 2, md: 3 },
+                  backgroundColor: "#FFFFFF",
+                  borderBottom: `1px solid ${cores.borda}`,
                 }}
               >
-                <TextField
-                  fullWidth
-                  size="small"
-                  placeholder="Buscar por OS, cliente, peça ou operador..."
-                  value={busca}
-                  onChange={(e) => setBusca(e.target.value)}
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Search size={18} />
-                        </InputAdornment>
-                      ),
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: {
+                      xs: "1fr",
+                      md: "minmax(250px, 1fr) 190px 190px auto",
                     },
+                    gap: 1.5,
+                    alignItems: "center",
                   }}
-                />
-
-                <TextField
-                  select
-                  size="small"
-                  label="Status"
-                  value={filtroStatus}
-                  onChange={(e) => setFiltroStatus(e.target.value)}
-                  sx={{ minWidth: { xs: "100%", md: 180 } }}
                 >
-                  <MenuItem value="TODOS">Todos</MenuItem>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="Buscar OS, cliente, peça ou operador..."
+                    value={busca}
+                    onChange={(e) => setBusca(e.target.value)}
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <Search size={18} color={cores.secundario} />
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: 2,
+                        backgroundColor: "#FFFFFF",
+                      },
+                    }}
+                  />
 
-                  {statusOptions.map((status) => (
-                    <MenuItem key={status.value} value={status.value}>
-                      {status.label}
-                    </MenuItem>
-                  ))}
-                </TextField>
+                  <TextField
+                    select
+                    size="small"
+                    label="Status"
+                    value={filtroStatus}
+                    onChange={(e) => setFiltroStatus(e.target.value)}
+                    sx={{
+                      "& .MuiOutlinedInput-root": { borderRadius: 2 },
+                    }}
+                  >
+                    <MenuItem value="TODOS">Todos os status</MenuItem>
 
-                <TextField
-                  select
-                  size="small"
-                  label="Etapa"
-                  value={filtroEtapa}
-                  onChange={(e) => setFiltroEtapa(e.target.value)}
-                  sx={{ minWidth: { xs: "100%", md: 180 } }}
-                >
-                  <MenuItem value="TODAS">Todas</MenuItem>
+                    {statusOptions.map((status) => (
+                      <MenuItem key={status.value} value={status.value}>
+                        {status.label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
 
-                  {etapas.map((etapa) => (
-                    <MenuItem key={etapa.value} value={etapa.value}>
-                      {etapa.label}
-                    </MenuItem>
-                  ))}
-                </TextField>
+                  <TextField
+                    select
+                    size="small"
+                    label="Processo"
+                    value={filtroProcesso}
+                    onChange={(e) => setFiltroProcesso(e.target.value)}
+                    sx={{
+                      "& .MuiOutlinedInput-root": { borderRadius: 2 },
+                    }}
+                  >
+                    <MenuItem value="TODOS">Todos os processos</MenuItem>
+
+                    {processos.map((processo) => (
+                      <MenuItem key={processo} value={processo}>
+                        {processo}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+
+                  <Tooltip title="Limpar filtros">
+                    <span>
+                      <IconButton
+                        onClick={limparFiltros}
+                        disabled={!possuiFiltros}
+                        sx={{
+                          border: `1px solid ${cores.borda}`,
+                          borderRadius: 2,
+                          width: 40,
+                          height: 40,
+                          color: cores.secundario,
+                        }}
+                      >
+                        <FilterX size={19} />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                </Box>
               </Box>
 
+              {/* Lista de ordens */}
               {producoes.length === 0 ? (
                 <Box
                   sx={{
                     display: "flex",
+                    flexDirection: "column",
                     justifyContent: "center",
                     alignItems: "center",
-                    minHeight: 250,
+                    minHeight: 280,
                     p: 3,
+                    textAlign: "center",
                   }}
                 >
-                  <Typography color="text.secondary">
-                    Nenhuma produção cadastrada.
+                  <Box
+                    sx={{
+                      width: 58,
+                      height: 58,
+                      borderRadius: "50%",
+                      backgroundColor: "#F0F2F5",
+                      color: cores.secundario,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      mb: 2,
+                    }}
+                  >
+                    <Factory size={26} />
+                  </Box>
+
+                  <Typography
+                    variant="subtitle1"
+                    sx={{ fontWeight: 700, color: cores.texto }}
+                  >
+                    Nenhuma produção cadastrada
+                  </Typography>
+
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mt: 0.5, maxWidth: 420 }}
+                  >
+                    Adicione processos de usinagem nas peças das ordens de
+                    serviço para acompanhar a produção por aqui.
                   </Typography>
                 </Box>
               ) : producoesFiltradas.length === 0 ? (
                 <Box
                   sx={{
                     display: "flex",
+                    flexDirection: "column",
                     justifyContent: "center",
                     alignItems: "center",
-                    minHeight: 200,
+                    minHeight: 240,
                     p: 3,
+                    textAlign: "center",
                   }}
                 >
-                  <Typography color="text.secondary">
-                    Nenhuma produção encontrada.
+                  <Search size={28} color={cores.secundario} />
+
+                  <Typography
+                    variant="subtitle1"
+                    sx={{ fontWeight: 700, color: cores.texto, mt: 1.5 }}
+                  >
+                    Nenhum resultado encontrado
                   </Typography>
+
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mt: 0.5 }}
+                  >
+                    Tente alterar a busca ou os filtros selecionados.
+                  </Typography>
+
+                  <Button
+                    onClick={limparFiltros}
+                    sx={{
+                      mt: 1.5,
+                      textTransform: "none",
+                      color: cores.laranja,
+                    }}
+                  >
+                    Limpar filtros
+                  </Button>
                 </Box>
               ) : (
-                <TableContainer sx={{ overflowX: "auto" }}>
-                  <Table sx={{ minWidth: 1100 }}>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>
-                          <strong>Produção</strong>
-                        </TableCell>
+                <Box sx={{ p: { xs: 1.5, md: 2.5 } }}>
+                  {ordensAgrupadas.map((grupo) => {
+                    const totalEtapas = grupo.producoes.length;
 
-                        <TableCell>
-                          <strong>Ordem de serviço</strong>
-                        </TableCell>
+                    const etapasConcluidas = grupo.producoes.filter(
+                      (item) => item.status === "CONCLUIDA",
+                    ).length;
 
-                        <TableCell>
-                          <strong>Cliente</strong>
-                        </TableCell>
+                    const etapasEmAndamento = grupo.producoes.filter(
+                      (item) => item.status === "EM_ANDAMENTO",
+                    ).length;
 
-                        <TableCell>
-                          <strong>Peça</strong>
-                        </TableCell>
+                    const etapasPendentes = grupo.producoes.filter(
+                      (item) => item.status === "PENDENTE",
+                    ).length;
 
-                        <TableCell>
-                          <strong>Etapa</strong>
-                        </TableCell>
+                    const progresso =
+                      totalEtapas > 0
+                        ? (etapasConcluidas / totalEtapas) * 100
+                        : 0;
 
-                        <TableCell>
-                          <strong>Operador</strong>
-                        </TableCell>
+                    const statusGeral: StatusProducao =
+                      etapasConcluidas === totalEtapas
+                        ? "CONCLUIDA"
+                        : etapasEmAndamento > 0 || etapasConcluidas > 0
+                          ? "EM_ANDAMENTO"
+                          : "PENDENTE";
 
-                        <TableCell>
-                          <strong>Quantidade</strong>
-                        </TableCell>
-
-                        <TableCell>
-                          <strong>Prazo</strong>
-                        </TableCell>
-
-                        <TableCell>
-                          <strong>Status</strong>
-                        </TableCell>
-
-                        <TableCell align="right">
-                          <strong>Ações</strong>
-                        </TableCell>
-                      </TableRow>
-                    </TableHead>
-
-                    <TableBody>
-                      {producoesFiltradas.map((producao) => (
-                        <TableRow key={producao.id} hover>
-                          <TableCell>#{producao.id}</TableCell>
-
-                          <TableCell>
-                            #{producao.itemOrdem?.ordem?.id ?? "-"}
-                          </TableCell>
-
-                          <TableCell>
-                            {producao.itemOrdem?.ordem?.cliente?.nome ??
-                              "Não informado"}
-                          </TableCell>
-
-                          <TableCell>
-                            {producao.itemOrdem?.peca?.nome ?? "Não informada"}
-                          </TableCell>
-
-                          <TableCell>{nomeEtapa(producao.etapa)}</TableCell>
-
-                          <TableCell>
-                            {producao.operador?.name ?? "Não informado"}
-                          </TableCell>
-
-                          <TableCell>
-                            <Typography variant="body2">
-                              {producao.quantidadeProduzida} /{" "}
-                              {producao.itemOrdem?.quantidade ?? "-"}
-                            </Typography>
-
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                            >
-                              Produzida / Solicitada
-                            </Typography>
-                          </TableCell>
-
-                          <TableCell>
-                            {formatarData(producao.itemOrdem?.ordem?.prazo)}
-                          </TableCell>
-
-                          <TableCell>
-                            <Chip
-                              label={nomeStatus(producao.status)}
-                              size="small"
+                    return (
+                      <Accordion
+                        key={grupo.ordemId}
+                        disableGutters
+                        elevation={0}
+                        sx={{
+                          mb: 2,
+                          border: `1px solid ${cores.borda}`,
+                          borderRadius: "12px !important",
+                          overflow: "hidden",
+                          backgroundColor: "#FFFFFF",
+                          "&:before": { display: "none" },
+                          "&.Mui-expanded": { my: 0, mb: 2 },
+                        }}
+                      >
+                        <AccordionSummary
+                          expandIcon={
+                            <Box
                               sx={{
-                                ...corStatus(producao.status),
-                                fontWeight: 600,
-                                borderRadius: 1.5,
+                                width: 34,
+                                height: 34,
+                                borderRadius: 2,
+                                border: `1px solid ${cores.borda}`,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                color: cores.secundario,
                               }}
-                            />
-                          </TableCell>
-
-                          <TableCell align="right">
-                            <IconButton
-                              aria-label="Visualizar produção"
-                              onClick={() => abrirVisualizacao(producao)}
-                              sx={{ color: "#667085" }}
                             >
-                              <ClipboardList size={18} />
-                            </IconButton>
-
-                            <IconButton
-                              aria-label="Editar produção"
-                              onClick={() => abrirEdicao(producao)}
-                              disabled={producao.status === "CONCLUIDA"}
-                              sx={{ color: "#17233B" }}
+                              <ChevronDown size={19} />
+                            </Box>
+                          }
+                          sx={{
+                            px: { xs: 2, md: 3 },
+                            py: 1.5,
+                            minHeight: "unset",
+                            "&.Mui-expanded": { minHeight: "unset" },
+                            "& .MuiAccordionSummary-content": {
+                              my: 1,
+                              minWidth: 0,
+                            },
+                            "& .MuiAccordionSummary-content.Mui-expanded": {
+                              my: 1,
+                            },
+                          }}
+                        >
+                          <Box sx={{ width: "100%", pr: 1, minWidth: 0 }}>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: {
+                                  xs: "flex-start",
+                                  sm: "center",
+                                },
+                                flexDirection: {
+                                  xs: "column",
+                                  sm: "row",
+                                },
+                                gap: 1.5,
+                                mb: 2,
+                              }}
                             >
-                              <Pencil size={18} />
-                            </IconButton>
+                              <Box sx={{ minWidth: 0 }}>
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    flexWrap: "wrap",
+                                    gap: 1.2,
+                                  }}
+                                >
+                                  <Typography
+                                    variant="h6"
+                                    sx={{
+                                      fontWeight: 750,
+                                      color: cores.texto,
+                                      letterSpacing: "-.3px",
+                                    }}
+                                  >
+                                    OS #{grupo.ordemId}
+                                  </Typography>
 
-                            <IconButton
-                              aria-label="Excluir produção"
-                              onClick={() => abrirExclusao(producao)}
-                              sx={{ color: "#D14343" }}
+                                  <Chip
+                                    label={nomeStatus(statusGeral)}
+                                    size="small"
+                                    sx={{
+                                      ...corStatus(statusGeral),
+                                      fontWeight: 650,
+                                      borderRadius: 1.5,
+                                      height: 25,
+                                    }}
+                                  />
+                                </Box>
+
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    color: cores.secundario,
+                                    mt: 0.5,
+                                  }}
+                                >
+                                  {grupo.ordem.cliente?.nome ??
+                                    "Cliente não informado"}
+                                </Typography>
+                              </Box>
+
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 1,
+                                  color: cores.secundario,
+                                  flexShrink: 0,
+                                }}
+                              >
+                                <CalendarDays size={16} />
+
+                                <Typography variant="caption">
+                                  Prazo:{" "}
+                                  <strong>
+                                    {formatarData(grupo.ordem.prazo)}
+                                  </strong>
+                                </Typography>
+                              </Box>
+                            </Box>
+
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                flexWrap: "wrap",
+                                gap: { xs: 1.5, md: 3 },
+                                mb: 2,
+                              }}
                             >
-                              <Trash2 size={18} />
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 0.7,
+                                  color: cores.secundario,
+                                }}
+                              >
+                                <Package size={15} />
+                                <Typography variant="caption">
+                                  <strong>{grupo.itens.length}</strong>{" "}
+                                  {grupo.itens.length === 1 ? "peça" : "peças"}
+                                </Typography>
+                              </Box>
+
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                <strong>{totalEtapas}</strong>{" "}
+                                {totalEtapas === 1 ? "etapa" : "etapas"}
+                              </Typography>
+
+                              <Typography
+                                variant="caption"
+                                sx={{ color: cores.verde }}
+                              >
+                                <strong>{etapasConcluidas}</strong> concluídas
+                              </Typography>
+
+                              <Typography
+                                variant="caption"
+                                sx={{ color: cores.azul }}
+                              >
+                                <strong>{etapasEmAndamento}</strong> em
+                                andamento
+                              </Typography>
+
+                              <Typography
+                                variant="caption"
+                                sx={{ color: cores.secundario }}
+                              >
+                                <strong>{etapasPendentes}</strong> pendentes
+                              </Typography>
+                            </Box>
+
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1.5,
+                              }}
+                            >
+                              <LinearProgress
+                                variant="determinate"
+                                value={progresso}
+                                sx={{
+                                  flex: 1,
+                                  height: 7,
+                                  borderRadius: 10,
+                                  backgroundColor: "#EDF0F4",
+                                  "& .MuiLinearProgress-bar": {
+                                    borderRadius: 10,
+                                    backgroundColor: cores.verde,
+                                  },
+                                }}
+                              />
+
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  fontWeight: 750,
+                                  color: cores.texto,
+                                  minWidth: 38,
+                                  textAlign: "right",
+                                }}
+                              >
+                                {Math.round(progresso)}%
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </AccordionSummary>
+
+                        <AccordionDetails
+                          sx={{
+                            px: { xs: 1.5, md: 3 },
+                            pb: 3,
+                            pt: 1,
+                            backgroundColor: "#F8FAFC",
+                            borderTop: `1px solid ${cores.borda}`,
+                          }}
+                        >
+                          {grupo.itens.map((grupoItem) => {
+                            const totalItem = grupoItem.producoes.length;
+
+                            const concluidasItem = grupoItem.producoes.filter(
+                              (item) => item.status === "CONCLUIDA",
+                            ).length;
+
+                            const progressoItem =
+                              totalItem > 0
+                                ? (concluidasItem / totalItem) * 100
+                                : 0;
+
+                            return (
+                              <Card
+                                key={grupoItem.item.id}
+                                elevation={0}
+                                sx={{
+                                  mb: 2,
+                                  border: `1px solid ${cores.borda}`,
+                                  borderRadius: 2.5,
+                                  overflow: "hidden",
+                                  "&:last-child": { mb: 0 },
+                                }}
+                              >
+                                {/* Cabeçalho da peça */}
+                                <Box
+                                  sx={{
+                                    px: { xs: 2, md: 2.5 },
+                                    py: 2,
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: {
+                                      xs: "flex-start",
+                                      sm: "center",
+                                    },
+                                    flexDirection: {
+                                      xs: "column",
+                                      sm: "row",
+                                    },
+                                    gap: 2,
+                                  }}
+                                >
+                                  <Box sx={{ minWidth: 0, flex: 1 }}>
+                                    <Box
+                                      sx={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: 1,
+                                        flexWrap: "wrap",
+                                      }}
+                                    >
+                                      <Typography
+                                        variant="subtitle1"
+                                        sx={{
+                                          fontWeight: 700,
+                                          color: cores.texto,
+                                        }}
+                                      >
+                                        {grupoItem.item.peca?.nome ??
+                                          "Peça não informada"}
+                                      </Typography>
+
+                                      <Chip
+                                        label={`${grupoItem.item.quantidade} ${
+                                          grupoItem.item.quantidade === 1
+                                            ? "unidade"
+                                            : "unidades"
+                                        }`}
+                                        size="small"
+                                        sx={{
+                                          backgroundColor: "#F0F2F5",
+                                          color: cores.texto,
+                                          fontWeight: 600,
+                                          height: 24,
+                                        }}
+                                      />
+                                    </Box>
+
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        display: "block",
+                                        color: cores.secundario,
+                                        mt: 0.5,
+                                      }}
+                                    >
+                                      {totalItem}{" "}
+                                      {totalItem === 1
+                                        ? "processo cadastrado"
+                                        : "processos cadastrados"}
+                                    </Typography>
+                                  </Box>
+
+                                  <Box
+                                    sx={{
+                                      width: {
+                                        xs: "100%",
+                                        sm: 190,
+                                      },
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    <Box
+                                      sx={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        mb: 0.7,
+                                      }}
+                                    >
+                                      <Typography
+                                        variant="caption"
+                                        color="text.secondary"
+                                      >
+                                        Progresso da peça
+                                      </Typography>
+
+                                      <Typography
+                                        variant="caption"
+                                        sx={{
+                                          color: cores.texto,
+                                          fontWeight: 700,
+                                        }}
+                                      >
+                                        {Math.round(progressoItem)}%
+                                      </Typography>
+                                    </Box>
+
+                                    <LinearProgress
+                                      variant="determinate"
+                                      value={progressoItem}
+                                      sx={{
+                                        height: 6,
+                                        borderRadius: 10,
+                                        backgroundColor: "#EDF0F4",
+                                        "& .MuiLinearProgress-bar": {
+                                          borderRadius: 10,
+                                          backgroundColor: cores.verde,
+                                        },
+                                      }}
+                                    />
+                                  </Box>
+                                </Box>
+
+                                {/* Tabela de processos */}
+                                <TableContainer
+                                  sx={{
+                                    overflowX: "auto",
+                                    borderTop: `1px solid ${cores.borda}`,
+                                  }}
+                                >
+                                  <Table sx={{ minWidth: 900 }} size="small">
+                                    <TableHead>
+                                      <TableRow
+                                        sx={{
+                                          backgroundColor: "#F8FAFC",
+                                          "& th": {
+                                            color: cores.secundario,
+                                            fontWeight: 700,
+                                            fontSize: 11,
+                                            textTransform: "uppercase",
+                                            letterSpacing: ".4px",
+                                            py: 1.5,
+                                            borderBottom: `1px solid ${cores.borda}`,
+                                          },
+                                        }}
+                                      >
+                                        <TableCell>Processo</TableCell>
+                                        <TableCell align="center">
+                                          Etapa
+                                        </TableCell>
+                                        <TableCell>Operador</TableCell>
+                                        <TableCell>Quantidade</TableCell>
+                                        <TableCell>Prazo</TableCell>
+                                        <TableCell>Status</TableCell>
+                                        <TableCell align="right">
+                                          Ações
+                                        </TableCell>
+                                      </TableRow>
+                                    </TableHead>
+
+                                    <TableBody>
+                                      {grupoItem.producoes.map((producao) => {
+                                        const emAndamento =
+                                          producao.status === "EM_ANDAMENTO";
+
+                                        return (
+                                          <TableRow
+                                            key={producao.id}
+                                            hover
+                                            sx={{
+                                              backgroundColor: emAndamento
+                                                ? "#F5F9FF"
+                                                : "#FFFFFF",
+                                              "& td": {
+                                                borderBottom: `1px solid ${cores.borda}`,
+                                                py: 1.5,
+                                              },
+                                              "&:last-child td": {
+                                                borderBottom: 0,
+                                              },
+                                            }}
+                                          >
+                                            <TableCell>
+                                              <Box
+                                                sx={{
+                                                  display: "flex",
+                                                  alignItems: "center",
+                                                  gap: 1,
+                                                }}
+                                              >
+                                                {emAndamento && (
+                                                  <Box
+                                                    sx={{
+                                                      width: 7,
+                                                      height: 7,
+                                                      borderRadius: "50%",
+                                                      backgroundColor:
+                                                        cores.azul,
+                                                      flexShrink: 0,
+                                                    }}
+                                                  />
+                                                )}
+
+                                                <Typography
+                                                  variant="body2"
+                                                  sx={{
+                                                    fontWeight: emAndamento
+                                                      ? 750
+                                                      : 600,
+                                                    color: cores.texto,
+                                                  }}
+                                                >
+                                                  {producao.process?.name ??
+                                                    "Não informado"}
+                                                </Typography>
+                                              </Box>
+                                            </TableCell>
+
+                                            <TableCell align="center">
+                                              <Box
+                                                sx={{
+                                                  display: "inline-flex",
+                                                  alignItems: "center",
+                                                  justifyContent: "center",
+                                                  width: 29,
+                                                  height: 29,
+                                                  borderRadius: 1.5,
+                                                  backgroundColor: emAndamento
+                                                    ? "#EAF2FF"
+                                                    : "#F0F2F5",
+                                                  color: emAndamento
+                                                    ? cores.azul
+                                                    : cores.texto,
+                                                  fontSize: 12,
+                                                  fontWeight: 750,
+                                                }}
+                                              >
+                                                {producao.sequence}
+                                              </Box>
+                                            </TableCell>
+
+                                            <TableCell>
+                                              <Typography
+                                                variant="body2"
+                                                sx={{
+                                                  color: producao.operador
+                                                    ? cores.texto
+                                                    : cores.secundario,
+                                                  fontWeight: producao.operador
+                                                    ? 500
+                                                    : 400,
+                                                }}
+                                              >
+                                                {producao.operador?.name ??
+                                                  "Não atribuído"}
+                                              </Typography>
+                                            </TableCell>
+
+                                            <TableCell>
+                                              <Typography
+                                                variant="body2"
+                                                sx={{
+                                                  color: cores.texto,
+                                                  fontWeight: 600,
+                                                }}
+                                              >
+                                                {producao.quantidadeProduzida} /{" "}
+                                                {grupoItem.item.quantidade}
+                                              </Typography>
+
+                                              <Typography
+                                                variant="caption"
+                                                color="text.secondary"
+                                              >
+                                                Produzida / Solicitada
+                                              </Typography>
+                                            </TableCell>
+
+                                            <TableCell>
+                                              <Typography
+                                                variant="body2"
+                                                color="text.secondary"
+                                              >
+                                                {formatarData(
+                                                  grupo.ordem.prazo,
+                                                )}
+                                              </Typography>
+                                            </TableCell>
+
+                                            <TableCell>
+                                              <Chip
+                                                label={nomeStatus(
+                                                  producao.status,
+                                                )}
+                                                size="small"
+                                                sx={{
+                                                  ...corStatus(producao.status),
+                                                  fontWeight: 650,
+                                                  borderRadius: 1.5,
+                                                  height: 25,
+                                                }}
+                                              />
+                                            </TableCell>
+
+                                            <TableCell align="right">
+                                              <Box
+                                                sx={{
+                                                  display: "flex",
+                                                  justifyContent: "flex-end",
+                                                  gap: 0.3,
+                                                }}
+                                              >
+                                                <Tooltip title="Visualizar">
+                                                  <IconButton
+                                                    aria-label="Visualizar produção"
+                                                    onClick={() =>
+                                                      abrirVisualizacao(
+                                                        producao,
+                                                      )
+                                                    }
+                                                    size="small"
+                                                    sx={{
+                                                      color: cores.secundario,
+                                                      "&:hover": {
+                                                        backgroundColor:
+                                                          "#F0F2F5",
+                                                        color: cores.texto,
+                                                      },
+                                                    }}
+                                                  >
+                                                    <Eye size={17} />
+                                                  </IconButton>
+                                                </Tooltip>
+
+                                                <Tooltip
+                                                  title={
+                                                    producao.status ===
+                                                    "CONCLUIDA"
+                                                      ? "Etapa concluída"
+                                                      : "Editar"
+                                                  }
+                                                >
+                                                  <span>
+                                                    <IconButton
+                                                      aria-label="Editar produção"
+                                                      onClick={() =>
+                                                        abrirEdicao(producao)
+                                                      }
+                                                      disabled={
+                                                        producao.status ===
+                                                        "CONCLUIDA"
+                                                      }
+                                                      size="small"
+                                                      sx={{
+                                                        color: cores.azul,
+                                                        "&:hover": {
+                                                          backgroundColor:
+                                                            "#EAF2FF",
+                                                        },
+                                                      }}
+                                                    >
+                                                      <Pencil size={17} />
+                                                    </IconButton>
+                                                  </span>
+                                                </Tooltip>
+
+                                                <Tooltip title="Excluir">
+                                                  <IconButton
+                                                    aria-label="Excluir produção"
+                                                    onClick={() =>
+                                                      abrirExclusao(producao)
+                                                    }
+                                                    size="small"
+                                                    sx={{
+                                                      color: cores.vermelho,
+                                                      "&:hover": {
+                                                        backgroundColor:
+                                                          "#FFF0F0",
+                                                      },
+                                                    }}
+                                                  >
+                                                    <Trash2 size={17} />
+                                                  </IconButton>
+                                                </Tooltip>
+                                              </Box>
+                                            </TableCell>
+                                          </TableRow>
+                                        );
+                                      })}
+                                    </TableBody>
+                                  </Table>
+                                </TableContainer>
+                              </Card>
+                            );
+                          })}
+                        </AccordionDetails>
+                      </Accordion>
+                    );
+                  })}
+                </Box>
               )}
             </>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Dialog de cadastro */}
-      <Dialog
-        open={dialogCadastro}
-        onClose={processando ? undefined : fecharCadastro}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle sx={{ fontWeight: 700, color: "#17233B" }}>
-          Nova produção
-        </DialogTitle>
-
-        <DialogContent>
-          <TextField
-            select
-            fullWidth
-            label="Item da ordem de serviço"
-            value={formulario.itemOrdemId}
-            onChange={(e) => atualizarCampo("itemOrdemId", e.target.value)}
-            required
-            sx={{ mt: 1, mb: 2 }}
-          >
-            {itensOrdem.map((item) => (
-              <MenuItem key={item.id} value={String(item.id)}>
-                OS #{item.ordem?.id} — {item.peca?.nome} —{" "}
-                {item.ordem?.cliente?.nome ?? "Cliente não informado"}
-              </MenuItem>
-            ))}
-          </TextField>
-
-          <TextField
-            fullWidth
-            select
-            label="Operador"
-            value={formulario.operadorId}
-            onChange={(e) => atualizarCampo("operadorId", e.target.value)}
-            required
-            sx={{ mb: 2 }}
-          >
-            {operadores
-              .filter((operador) => operador.active)
-              .map((operador) => (
-                <MenuItem key={operador.id} value={String(operador.id)}>
-                  {operador.name}
-                </MenuItem>
-              ))}
-          </TextField>
-
-          <TextField
-            fullWidth
-            select
-            label="Etapa da produção"
-            value={formulario.etapa}
-            onChange={(e) =>
-              atualizarCampo("etapa", e.target.value as EtapaProducao)
-            }
-            sx={{ mb: 2 }}
-          >
-            {etapas.map((etapa) => (
-              <MenuItem key={etapa.value} value={etapa.value}>
-                {etapa.label}
-              </MenuItem>
-            ))}
-          </TextField>
-
-          <TextField
-            fullWidth
-            select
-            label="Status"
-            value={formulario.status}
-            onChange={(e) =>
-              atualizarCampo("status", e.target.value as StatusProducao)
-            }
-            sx={{ mb: 2 }}
-          >
-            {statusOptions.map((status) => (
-              <MenuItem key={status.value} value={status.value}>
-                {status.label}
-              </MenuItem>
-            ))}
-          </TextField>
-
-          {itemSelecionado && (
-            <Alert severity="info" sx={{ mb: 2 }}>
-              Quantidade solicitada na ordem:{" "}
-              <strong>{itemSelecionado.quantidade}</strong>
-            </Alert>
-          )}
-
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "1fr",
-                sm: "repeat(3, 1fr)",
-              },
-              gap: 2,
-              mb: 2,
-            }}
-          >
-            <TextField
-              type="number"
-              label="Produzida"
-              value={formulario.quantidadeProduzida}
-              onChange={(e) =>
-                atualizarCampo("quantidadeProduzida", e.target.value)
-              }
-              slotProps={{ htmlInput: { min: 0, step: 1 } }}
-            />
-
-            <TextField
-              type="number"
-              label="Aprovada"
-              value={formulario.quantidadeAprovada}
-              onChange={(e) =>
-                atualizarCampo("quantidadeAprovada", e.target.value)
-              }
-              slotProps={{ htmlInput: { min: 0, step: 1 } }}
-            />
-
-            <TextField
-              type="number"
-              label="Rejeitada"
-              value={formulario.quantidadeRejeitada}
-              onChange={(e) =>
-                atualizarCampo("quantidadeRejeitada", e.target.value)
-              }
-              slotProps={{ htmlInput: { min: 0, step: 1 } }}
-            />
-          </Box>
-
-          <TextField
-            fullWidth
-            label="Observações"
-            value={formulario.observacoes}
-            onChange={(e) => atualizarCampo("observacoes", e.target.value)}
-            multiline
-            minRows={3}
-          />
-        </DialogContent>
-
-        <DialogActions sx={{ p: 3 }}>
-          <Button
-            onClick={fecharCadastro}
-            disabled={processando}
-            sx={{ textTransform: "none", color: "#667085" }}
-          >
-            Cancelar
-          </Button>
-
-          <Button
-            variant="contained"
-            onClick={cadastrarProducao}
-            disabled={processando}
-            sx={{
-              textTransform: "none",
-              backgroundColor: "#E56A2F",
-              "&:hover": {
-                backgroundColor: "#CF5D27",
-              },
-            }}
-          >
-            {processando ? "Cadastrando..." : "Cadastrar produção"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        </Card>
+      </Box>
 
       {/* Dialog de edição */}
       <Dialog
@@ -1139,33 +1780,46 @@ export default function ProducaoPage() {
         onClose={processando ? undefined : fecharEdicao}
         fullWidth
         maxWidth="sm"
+        slotProps={{
+          paper: {
+            sx: { borderRadius: 3 },
+          },
+        }}
       >
-        <DialogTitle sx={{ fontWeight: 700, color: "#17233B" }}>
+        <DialogTitle
+          sx={{
+            fontWeight: 750,
+            color: cores.texto,
+            borderBottom: `1px solid ${cores.borda}`,
+          }}
+        >
           Editar produção #{producaoSelecionada?.id}
         </DialogTitle>
 
-        <DialogContent>
+        <DialogContent sx={{ pt: "20px !important" }}>
           {producaoConcluida ? (
             <Alert severity="warning" sx={{ mt: 1 }}>
               Produções concluídas não podem ser alteradas.
             </Alert>
           ) : (
             <>
-              <TextField
-                fullWidth
-                select
-                label="Item da ordem de serviço"
-                value={formulario.itemOrdemId}
-                onChange={(e) => atualizarCampo("itemOrdemId", e.target.value)}
-                sx={{ mt: 1, mb: 2 }}
+              <Alert
+                severity="info"
+                icon={<AlertCircle size={19} />}
+                sx={{ mb: 2.5, borderRadius: 2 }}
               >
-                {itensOrdem.map((item) => (
-                  <MenuItem key={item.id} value={String(item.id)}>
-                    OS #{item.ordem?.id} — {item.peca?.nome} —{" "}
-                    {item.ordem?.cliente?.nome ?? "Cliente não informado"}
-                  </MenuItem>
-                ))}
-              </TextField>
+                <strong>OS:</strong> #
+                {producaoSelecionada?.itemOrdem?.ordem?.id ?? "-"}
+                <br />
+                <strong>Peça:</strong>{" "}
+                {producaoSelecionada?.itemOrdem?.peca?.nome ?? "-"}
+                <br />
+                <strong>Processo:</strong>{" "}
+                {producaoSelecionada?.process?.name ?? "-"}
+                <br />
+                <strong>Sequência:</strong>{" "}
+                {producaoSelecionada?.sequence ?? "-"}
+              </Alert>
 
               <TextField
                 fullWidth
@@ -1175,6 +1829,8 @@ export default function ProducaoPage() {
                 onChange={(e) => atualizarCampo("operadorId", e.target.value)}
                 sx={{ mb: 2 }}
               >
+                <MenuItem value="">Não atribuído</MenuItem>
+
                 {operadores
                   .filter(
                     (operador) =>
@@ -1186,23 +1842,6 @@ export default function ProducaoPage() {
                       {operador.name}
                     </MenuItem>
                   ))}
-              </TextField>
-
-              <TextField
-                fullWidth
-                select
-                label="Etapa"
-                value={formulario.etapa}
-                onChange={(e) =>
-                  atualizarCampo("etapa", e.target.value as EtapaProducao)
-                }
-                sx={{ mb: 2 }}
-              >
-                {etapas.map((etapa) => (
-                  <MenuItem key={etapa.value} value={etapa.value}>
-                    {etapa.label}
-                  </MenuItem>
-                ))}
               </TextField>
 
               <TextField
@@ -1222,12 +1861,12 @@ export default function ProducaoPage() {
                 ))}
               </TextField>
 
-              {itemSelecionado && (
-                <Alert severity="info" sx={{ mb: 2 }}>
-                  Quantidade solicitada na ordem:{" "}
-                  <strong>{itemSelecionado.quantidade}</strong>
-                </Alert>
-              )}
+              <Typography
+                variant="subtitle2"
+                sx={{ fontWeight: 700, color: cores.texto, mb: 1.5 }}
+              >
+                Controle de quantidades
+              </Typography>
 
               <Box
                 sx={{
@@ -1237,7 +1876,7 @@ export default function ProducaoPage() {
                     sm: "repeat(3, 1fr)",
                   },
                   gap: 2,
-                  mb: 2,
+                  mb: 2.5,
                 }}
               >
                 <TextField
@@ -1247,7 +1886,9 @@ export default function ProducaoPage() {
                   onChange={(e) =>
                     atualizarCampo("quantidadeProduzida", e.target.value)
                   }
-                  slotProps={{ htmlInput: { min: 0, step: 1 } }}
+                  slotProps={{
+                    htmlInput: { min: 0, step: 1 },
+                  }}
                 />
 
                 <TextField
@@ -1257,7 +1898,9 @@ export default function ProducaoPage() {
                   onChange={(e) =>
                     atualizarCampo("quantidadeAprovada", e.target.value)
                   }
-                  slotProps={{ htmlInput: { min: 0, step: 1 } }}
+                  slotProps={{
+                    htmlInput: { min: 0, step: 1 },
+                  }}
                 />
 
                 <TextField
@@ -1267,7 +1910,9 @@ export default function ProducaoPage() {
                   onChange={(e) =>
                     atualizarCampo("quantidadeRejeitada", e.target.value)
                   }
-                  slotProps={{ htmlInput: { min: 0, step: 1 } }}
+                  slotProps={{
+                    htmlInput: { min: 0, step: 1 },
+                  }}
                 />
               </Box>
 
@@ -1283,11 +1928,20 @@ export default function ProducaoPage() {
           )}
         </DialogContent>
 
-        <DialogActions sx={{ p: 3 }}>
+        <DialogActions
+          sx={{
+            p: 2.5,
+            borderTop: `1px solid ${cores.borda}`,
+          }}
+        >
           <Button
             onClick={fecharEdicao}
             disabled={processando}
-            sx={{ textTransform: "none", color: "#667085" }}
+            sx={{
+              textTransform: "none",
+              color: cores.secundario,
+              fontWeight: 600,
+            }}
           >
             Fechar
           </Button>
@@ -1299,7 +1953,9 @@ export default function ProducaoPage() {
               disabled={processando}
               sx={{
                 textTransform: "none",
-                backgroundColor: "#E56A2F",
+                fontWeight: 650,
+                borderRadius: 2,
+                backgroundColor: cores.laranja,
                 "&:hover": {
                   backgroundColor: "#CF5D27",
                 },
@@ -1317,63 +1973,134 @@ export default function ProducaoPage() {
         onClose={() => setDialogVisualizacao(false)}
         fullWidth
         maxWidth="sm"
+        slotProps={{
+          paper: {
+            sx: { borderRadius: 3 },
+          },
+        }}
       >
-        <DialogTitle sx={{ fontWeight: 700, color: "#17233B" }}>
+        <DialogTitle
+          sx={{
+            fontWeight: 750,
+            color: cores.texto,
+            borderBottom: `1px solid ${cores.borda}`,
+          }}
+        >
           Detalhes da produção #{producaoSelecionada?.id}
         </DialogTitle>
 
-        <DialogContent>
+        <DialogContent sx={{ pt: "20px !important" }}>
           {producaoSelecionada && (
-            <Box sx={{ mt: 1, display: "grid", gap: 2 }}>
-              <Typography>
-                <strong>Ordem de serviço:</strong> #
-                {producaoSelecionada.itemOrdem?.ordem?.id ?? "-"}
+            <Box sx={{ mt: 1, display: "grid", gap: 2.2 }}>
+              <Box
+                sx={{
+                  p: 2,
+                  borderRadius: 2,
+                  backgroundColor: "#F6F8FB",
+                  display: "grid",
+                  gap: 1.5,
+                }}
+              >
+                <Typography>
+                  <strong>Ordem de serviço:</strong> #
+                  {producaoSelecionada.itemOrdem?.ordem?.id ?? "-"}
+                </Typography>
+
+                <Typography>
+                  <strong>Cliente:</strong>{" "}
+                  {producaoSelecionada.itemOrdem?.ordem?.cliente?.nome ??
+                    "Não informado"}
+                </Typography>
+
+                <Typography>
+                  <strong>Peça:</strong>{" "}
+                  {producaoSelecionada.itemOrdem?.peca?.nome ?? "Não informada"}
+                </Typography>
+
+                <Typography>
+                  <strong>Processo:</strong>{" "}
+                  {producaoSelecionada.process?.name ?? "Não informado"}
+                </Typography>
+
+                <Typography>
+                  <strong>Sequência:</strong>{" "}
+                  {producaoSelecionada.sequence ?? "-"}
+                </Typography>
+
+                <Typography>
+                  <strong>Operador:</strong>{" "}
+                  {producaoSelecionada.operador?.name ?? "Não atribuído"}
+                </Typography>
+
+                <Box>
+                  <Typography component="span" sx={{ fontWeight: 700, mr: 1 }}>
+                    Status:
+                  </Typography>
+
+                  <Chip
+                    label={nomeStatus(producaoSelecionada.status)}
+                    size="small"
+                    sx={{
+                      ...corStatus(producaoSelecionada.status),
+                      fontWeight: 650,
+                    }}
+                  />
+                </Box>
+              </Box>
+
+              <Typography
+                variant="subtitle2"
+                sx={{ fontWeight: 700, color: cores.texto }}
+              >
+                Quantidades
               </Typography>
 
-              <Typography>
-                <strong>Cliente:</strong>{" "}
-                {producaoSelecionada.itemOrdem?.ordem?.cliente?.nome ??
-                  "Não informado"}
-              </Typography>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, 1fr)",
+                  gap: 1.5,
+                }}
+              >
+                {[
+                  {
+                    titulo: "Solicitada",
+                    valor: producaoSelecionada.itemOrdem?.quantidade ?? "-",
+                  },
+                  {
+                    titulo: "Produzida",
+                    valor: producaoSelecionada.quantidadeProduzida,
+                  },
+                  {
+                    titulo: "Aprovada",
+                    valor: producaoSelecionada.quantidadeAprovada,
+                  },
+                  {
+                    titulo: "Rejeitada",
+                    valor: producaoSelecionada.quantidadeRejeitada,
+                  },
+                ].map((item) => (
+                  <Box
+                    key={item.titulo}
+                    sx={{
+                      p: 1.8,
+                      border: `1px solid ${cores.borda}`,
+                      borderRadius: 2,
+                    }}
+                  >
+                    <Typography variant="caption" color="text.secondary">
+                      {item.titulo}
+                    </Typography>
 
-              <Typography>
-                <strong>Peça:</strong>{" "}
-                {producaoSelecionada.itemOrdem?.peca?.nome ?? "Não informada"}
-              </Typography>
-
-              <Typography>
-                <strong>Operador:</strong>{" "}
-                {producaoSelecionada.operador?.name ?? "Não informado"}
-              </Typography>
-
-              <Typography>
-                <strong>Etapa:</strong> {nomeEtapa(producaoSelecionada.etapa)}
-              </Typography>
-
-              <Typography>
-                <strong>Status:</strong>{" "}
-                {nomeStatus(producaoSelecionada.status)}
-              </Typography>
-
-              <Typography>
-                <strong>Quantidade solicitada:</strong>{" "}
-                {producaoSelecionada.itemOrdem?.quantidade ?? "-"}
-              </Typography>
-
-              <Typography>
-                <strong>Quantidade produzida:</strong>{" "}
-                {producaoSelecionada.quantidadeProduzida}
-              </Typography>
-
-              <Typography>
-                <strong>Quantidade aprovada:</strong>{" "}
-                {producaoSelecionada.quantidadeAprovada}
-              </Typography>
-
-              <Typography>
-                <strong>Quantidade rejeitada:</strong>{" "}
-                {producaoSelecionada.quantidadeRejeitada}
-              </Typography>
+                    <Typography
+                      variant="h6"
+                      sx={{ fontWeight: 750, color: cores.texto }}
+                    >
+                      {item.valor}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
 
               <Typography>
                 <strong>Início:</strong>{" "}
@@ -1390,18 +2117,35 @@ export default function ProducaoPage() {
                 {formatarData(producaoSelecionada.itemOrdem?.ordem?.prazo)}
               </Typography>
 
-              <Typography>
-                <strong>Observações:</strong>{" "}
-                {producaoSelecionada.observacoes || "Sem observações"}
-              </Typography>
+              <Box>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ fontWeight: 700, color: cores.texto, mb: 0.5 }}
+                >
+                  Observações
+                </Typography>
+
+                <Typography variant="body2" color="text.secondary">
+                  {producaoSelecionada.observacoes || "Sem observações."}
+                </Typography>
+              </Box>
             </Box>
           )}
         </DialogContent>
 
-        <DialogActions sx={{ p: 3 }}>
+        <DialogActions
+          sx={{
+            p: 2.5,
+            borderTop: `1px solid ${cores.borda}`,
+          }}
+        >
           <Button
             onClick={() => setDialogVisualizacao(false)}
-            sx={{ textTransform: "none", color: "#667085" }}
+            sx={{
+              textTransform: "none",
+              color: cores.secundario,
+              fontWeight: 600,
+            }}
           >
             Fechar
           </Button>
@@ -1414,8 +2158,15 @@ export default function ProducaoPage() {
         onClose={processando ? undefined : fecharExclusao}
         fullWidth
         maxWidth="xs"
+        slotProps={{
+          paper: {
+            sx: { borderRadius: 3 },
+          },
+        }}
       >
-        <DialogTitle sx={{ fontWeight: 700 }}>Excluir produção</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 750, color: cores.texto }}>
+          Excluir produção
+        </DialogTitle>
 
         <DialogContent>
           <Typography color="text.secondary">
@@ -1423,16 +2174,20 @@ export default function ProducaoPage() {
             <strong>#{producaoSelecionada?.id}</strong>?
           </Typography>
 
-          <Typography color="text.secondary" variant="body2" sx={{ mt: 1 }}>
+          <Alert severity="warning" sx={{ mt: 2, borderRadius: 2 }}>
             Essa ação não poderá ser desfeita.
-          </Typography>
+          </Alert>
         </DialogContent>
 
-        <DialogActions sx={{ p: 3 }}>
+        <DialogActions sx={{ p: 2.5 }}>
           <Button
             onClick={fecharExclusao}
             disabled={processando}
-            sx={{ textTransform: "none", color: "#667085" }}
+            sx={{
+              textTransform: "none",
+              color: cores.secundario,
+              fontWeight: 600,
+            }}
           >
             Cancelar
           </Button>
@@ -1442,7 +2197,11 @@ export default function ProducaoPage() {
             color="error"
             onClick={excluirProducao}
             disabled={processando}
-            sx={{ textTransform: "none" }}
+            sx={{
+              textTransform: "none",
+              fontWeight: 650,
+              borderRadius: 2,
+            }}
           >
             {processando ? "Excluindo..." : "Confirmar exclusão"}
           </Button>
@@ -1463,6 +2222,7 @@ export default function ProducaoPage() {
           severity={tipoMensagem}
           onClose={() => setSnackbarAberto(false)}
           variant="filled"
+          sx={{ borderRadius: 2 }}
         >
           {mensagem}
         </Alert>
