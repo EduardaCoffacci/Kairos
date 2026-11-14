@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -35,7 +36,7 @@ interface SidebarProps {
 }
 
 const menuItems = [
-  { label: "Dashboard", href: "/adm", icon: LayoutDashboard },
+  { label: "Dashboard", href: "/adm/dashboard", icon: LayoutDashboard },
   { label: "Clientes", href: "/adm/clientes", icon: Users },
   { label: "Operadores", href: "/adm/operadores", icon: UserCog },
   { label: "Peças", href: "/adm/pecas", icon: Package },
@@ -146,10 +147,8 @@ export default function Sidebar({
           const Icon = item.icon;
 
           const ativo =
-            item.href === "/adm"
-              ? pathname === "/adm"
-              : pathname === item.href ||
-                pathname.startsWith(`${item.href}/`);
+            pathname === item.href ||
+            pathname.startsWith(`${item.href}/`);
 
           return (
             <Tooltip
@@ -213,7 +212,9 @@ export default function Sidebar({
       >
         {itensInferiores.map((item) => {
           const Icon = item.icon;
-          const ativo = pathname.startsWith(item.href);
+          const ativo =
+            pathname === item.href ||
+            pathname.startsWith(`${item.href}/`);
 
           return (
             <Tooltip

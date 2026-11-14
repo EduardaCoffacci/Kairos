@@ -1,9 +1,10 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+
 import Grid from "@mui/material/Grid";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 
@@ -28,118 +29,40 @@ import {
   Factory,
 } from "lucide-react";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+// HOOKS
 
-// TIPOS
+import {
+  useDashboard,
+} from "./hooks/useDashboard";
 
-interface Ordem {
-  id: number;
-  dataAbertura: string;
-}
+import type {
+  OrdemRecente,
+} from "./hooks/useDashboard";
 
-interface Cliente {
-  id: number;
-  nome: string;
-}
+// UTILS
 
-interface Peca {
-  id: number;
-  nome: string;
-}
-
-interface PecaDaOrdem {
-  nome: string;
-  material: string;
-  quantidade: number;
-}
-
-interface OrdemRecente {
-  id: number;
-  cliente: string;
-  pecas: PecaDaOrdem[];
-  prazo: string | null;
-  status: string;
-  observacoes?: string | null;
-}
-
-interface Resumo {
-  totalOs: number;
-  emProducao: number;
-  aguardando: number;
-  concluidas: number;
-  totalClientes: number;
-  atrasadas: number;
-}
-
-// FORMATAÇÃO DE DATAS
-
-function formatarData(data: string | null) {
-  if (!data) return "Não definido";
-
-  const [ano, mes, dia] = data.slice(0, 10).split("-");
-
-  return `${dia}/${mes}/${ano}`;
-}
-
-// CORES DOS STATUS
-
-function corStatus(
-  status: string,
-): "info" | "warning" | "success" | "error" | "default" {
-  switch (status) {
-    case "ABERTA":
-      return "info";
-
-    case "EM_ANDAMENTO":
-      return "warning";
-
-    case "CONCLUIDA":
-      return "success";
-
-    case "CANCELADA":
-      return "error";
-
-    default:
-      return "default";
-  }
-}
-
-// ÚLTIMOS SEIS MESES
-
-function obterUltimosSeisMeses() {
-  const hoje = new Date();
-
-  return Array.from({ length: 6 }, (_, indice) => {
-    const data = new Date(
-      hoje.getFullYear(),
-      hoje.getMonth() - (5 - indice),
-      1,
-    );
-
-    const ano = data.getFullYear();
-    const mes = String(data.getMonth() + 1).padStart(2, "0");
-
-    return {
-      chave: `${ano}-${mes}`,
-      nome: data.toLocaleDateString("pt-BR", {
-        month: "short",
-      }),
-    };
-  });
-}
+import {
+  formatDate,
+  getStatusColor,
+  getLastSixMonths,
+} from "./utils/dashboard.utils";
 
 // DASHBOARD
 
 export default function DashboardPage() {
   const router = useRouter();
 
-  const [resumo, setResumo] = useState<Resumo | null>(null);
+  // DADOS DO DASHBOARD
 
-  const [ordens, setOrdens] = useState<Ordem[]>([]);
-  const [ordensRecentes, setOrdensRecentes] = useState<OrdemRecente[]>([]);
-
-  const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [pecas, setPecas] = useState<Peca[]>([]);
+  const {
+    resumo,
+    ordens,
+    ordensRecentes,
+    clientes,
+    pecas,
+    carregando,
+    erro,
+  } = useDashboard();
 
   // FILTROS
 
@@ -147,88 +70,30 @@ export default function DashboardPage() {
   const [statusSelecionado, setStatusSelecionado] = useState("");
   const [clienteSelecionado, setClienteSelecionado] = useState("");
 
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState("");
-
-  // BUSCA OS DADOS DA API
-
-  useEffect(() => {
-    async function buscarDados() {
-      try {
-        const [
-          respostaResumo,
-          respostaOrdens,
-          respostaRecentes,
-          respostaClientes,
-          respostaPecas,
-        ] = await Promise.all([
-          fetch(`${API_URL}/dashboard/resumo`),
-          fetch(`${API_URL}/orders`),
-          fetch(`${API_URL}/dashboard/ordens-recentes`),
-          fetch(`${API_URL}/clients`),
-          fetch(`${API_URL}/pecas`),
-        ]);
-
-        if (
-          !respostaResumo.ok ||
-          !respostaOrdens.ok ||
-          !respostaRecentes.ok ||
-          !respostaClientes.ok ||
-          !respostaPecas.ok
-        ) {
-          throw new Error("Erro ao buscar dados do dashboard.");
-        }
-
-        const [
-          dadosResumo,
-          dadosOrdens,
-          dadosRecentes,
-          dadosClientes,
-          dadosPecas,
-        ] = await Promise.all([
-          respostaResumo.json(),
-          respostaOrdens.json(),
-          respostaRecentes.json(),
-          respostaClientes.json(),
-          respostaPecas.json(),
-        ]);
-
-        setResumo(dadosResumo);
-        setOrdens(dadosOrdens);
-        setOrdensRecentes(dadosRecentes);
-        setClientes(dadosClientes);
-        setPecas(dadosPecas);
-      } catch (error) {
-        console.error("Erro ao carregar dashboard:", error);
-        setErro("Não foi possível carregar os dados do dashboard.");
-      } finally {
-        setCarregando(false);
-      }
-    }
-
-    buscarDados();
-  }, []);
-
   // FILTROS DAS ORDENS
 
-  const ordensFiltradas = ordensRecentes.filter((ordem) => {
-    const termo = busca.trim().toLowerCase();
+  const termo = busca.trim().toLowerCase();
 
+  const ordensFiltradas = ordensRecentes.filter((ordem) => {
     const correspondeBusca =
-      termo === "" ||
+      !termo ||
       String(ordem.id).includes(termo) ||
       (ordem.cliente ?? "").toLowerCase().includes(termo) ||
-      (ordem.pecas ?? []).some((peca) =>
+      ordem.pecas?.some((peca) =>
         (peca.nome ?? "").toLowerCase().includes(termo),
       );
 
     const correspondeStatus =
-      statusSelecionado === "" || ordem.status === statusSelecionado;
+      !statusSelecionado || ordem.status === statusSelecionado;
 
     const correspondeCliente =
-      clienteSelecionado === "" || ordem.cliente === clienteSelecionado;
+      !clienteSelecionado || ordem.cliente === clienteSelecionado;
 
-    return correspondeBusca && correspondeStatus && correspondeCliente;
+    return (
+      correspondeBusca &&
+      correspondeStatus &&
+      correspondeCliente
+    );
   });
 
   // COLUNAS DO DATAGRID
@@ -274,7 +139,8 @@ export default function DashboardPage() {
       headerAlign: "center",
       renderCell: (params) =>
         (params.row.pecas ?? []).reduce(
-          (total, peca) => total + (Number(peca.quantidade) || 0),
+          (total, peca) =>
+            total + (Number(peca.quantidade) || 0),
           0,
         ),
     },
@@ -282,7 +148,7 @@ export default function DashboardPage() {
       field: "prazo",
       headerName: "Prazo de entrega",
       width: 170,
-      renderCell: (params) => formatarData(params.row.prazo),
+      renderCell: (params) => formatDate(params.row.prazo),
     },
     {
       field: "status",
@@ -290,8 +156,10 @@ export default function DashboardPage() {
       width: 160,
       renderCell: (params) => (
         <Chip
-          label={String(params.row.status ?? "Não informado").replaceAll("_", " ")}
-          color={corStatus(params.row.status ?? "")}
+          label={String(
+            params.row.status ?? "Não informado",
+          ).replaceAll("_", " ")}
+          color={getStatusColor(params.row.status ?? "")}
           size="small"
         />
       ),
@@ -337,7 +205,7 @@ export default function DashboardPage() {
 
   // DADOS DO GRÁFICO
 
-  const ultimosMeses = obterUltimosSeisMeses();
+  const ultimosMeses = getLastSixMonths();
 
   const dadosGrafico = ultimosMeses.map((mes) => {
     const quantidade = ordens.filter(
@@ -371,11 +239,15 @@ export default function DashboardPage() {
             };
           }
 
-          acumulado[nome].quantidade += Number(peca.quantidade) || 0;
+          acumulado[nome].quantidade +=
+            Number(peca.quantidade) || 0;
 
           return acumulado;
         },
-        {} as Record<string, { nome: string; quantidade: number }>,
+        {} as Record<
+          string,
+          { nome: string; quantidade: number }
+        >,
       ),
   ).sort((a, b) => b.quantidade - a.quantidade);
 
@@ -416,7 +288,10 @@ export default function DashboardPage() {
       {/* CABEÇALHO */}
 
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, color: "#17233B" }}>
+        <Typography
+          variant="h4"
+          sx={{ fontWeight: 700, color: "#17233B" }}
+        >
           Dashboard
         </Typography>
 
@@ -438,7 +313,10 @@ export default function DashboardPage() {
           const Icone = indicador.Icone;
 
           return (
-            <Grid key={indicador.titulo} size={{ xs: 12, sm: 6, lg: 3 }}>
+            <Grid
+              key={indicador.titulo}
+              size={{ xs: 12, sm: 6, lg: 3 }}
+            >
               <Card
                 elevation={0}
                 sx={{
@@ -462,7 +340,10 @@ export default function DashboardPage() {
                       gap: 1,
                     }}
                   >
-                    <Typography color="text.secondary" sx={{ fontWeight: 600 }}>
+                    <Typography
+                      color="text.secondary"
+                      sx={{ fontWeight: 600 }}
+                    >
                       {indicador.titulo}
                     </Typography>
 
@@ -485,7 +366,11 @@ export default function DashboardPage() {
 
                   <Typography
                     variant="h4"
-                    sx={{ mt: 2, fontWeight: 700, color: "#17233B" }}
+                    sx={{
+                      mt: 2,
+                      fontWeight: 700,
+                      color: "#17233B",
+                    }}
                   >
                     {carregando ? (
                       <CircularProgress size={25} />
@@ -508,7 +393,7 @@ export default function DashboardPage() {
         })}
       </Grid>
 
-      {/* CONTEÚDO PRINCIPAL - LARGURA TOTAL */}
+      {/* CONTEÚDO PRINCIPAL */}
 
       <Grid container spacing={2}>
         <Grid
@@ -534,9 +419,7 @@ export default function DashboardPage() {
             <CardContent
               sx={{
                 p: { xs: 2, md: 3 },
-                "&:last-child": {
-                  pb: 2,
-                },
+                "&:last-child": { pb: 2 },
               }}
             >
               <Box
@@ -578,7 +461,9 @@ export default function DashboardPage() {
                     borderRadius: 2,
                     px: 2.5,
                     py: 1.2,
-                    "&:hover": { backgroundColor: "#C94F1D" },
+                    "&:hover": {
+                      backgroundColor: "#C94F1D",
+                    },
                   }}
                 >
                   Criar nova OS
@@ -612,7 +497,9 @@ export default function DashboardPage() {
                   >
                     <MenuItem value="">Todos os status</MenuItem>
                     <MenuItem value="ABERTA">Aberta</MenuItem>
-                    <MenuItem value="EM_ANDAMENTO">Em andamento</MenuItem>
+                    <MenuItem value="EM_ANDAMENTO">
+                      Em andamento
+                    </MenuItem>
                     <MenuItem value="CONCLUIDA">Concluída</MenuItem>
                     <MenuItem value="CANCELADA">Cancelada</MenuItem>
                   </TextField>
@@ -632,7 +519,10 @@ export default function DashboardPage() {
                     <MenuItem value="">Todos os clientes</MenuItem>
 
                     {clientes.map((cliente) => (
-                      <MenuItem key={cliente.id} value={cliente.nome}>
+                      <MenuItem
+                        key={cliente.id}
+                        value={cliente.nome}
+                      >
                         {cliente.nome}
                       </MenuItem>
                     ))}
@@ -643,7 +533,13 @@ export default function DashboardPage() {
               {/* DATAGRID */}
 
               {carregando ? (
-                <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    p: 4,
+                  }}
+                >
                   <CircularProgress />
                 </Box>
               ) : erro ? (
@@ -658,7 +554,7 @@ export default function DashboardPage() {
                 <Box
                   sx={{
                     width: "100%",
-                    overflowX: "auto",
+                    overflow: "hidden",
                   }}
                 >
                   <Box
@@ -725,8 +621,8 @@ export default function DashboardPage() {
                   color="text.secondary"
                   sx={{ mt: 2 }}
                 >
-                  Exibindo {ordensFiltradas.length} de {ordensRecentes.length}{" "}
-                  ordens.
+                  Exibindo {ordensFiltradas.length} de{" "}
+                  {ordensRecentes.length} ordens.
                 </Typography>
               )}
 
@@ -740,7 +636,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* GRÁFICO */}
+          {/* GRÁFICO DE ORDENS POR MÊS */}
 
           <Card
             elevation={0}
@@ -753,17 +649,31 @@ export default function DashboardPage() {
             <CardContent sx={{ p: { xs: 2, md: 3 } }}>
               <Typography
                 variant="h6"
-                sx={{ fontWeight: 700, color: "#17233B", mb: 1 }}
+                sx={{
+                  fontWeight: 700,
+                  color: "#17233B",
+                  mb: 1,
+                }}
               >
                 Ordens de serviço por mês
               </Typography>
 
-              <Typography color="text.secondary" variant="body2" sx={{ mb: 4 }}>
+              <Typography
+                color="text.secondary"
+                variant="body2"
+                sx={{ mb: 4 }}
+              >
                 Quantidade de ordens abertas nos últimos seis meses
               </Typography>
 
               {carregando ? (
-                <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    p: 4,
+                  }}
+                >
                   <CircularProgress />
                 </Box>
               ) : (
@@ -790,7 +700,10 @@ export default function DashboardPage() {
                         gap: 1,
                       }}
                     >
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 600 }}
+                      >
                         {mes.quantidade}
                       </Typography>
 
@@ -798,7 +711,9 @@ export default function DashboardPage() {
                         sx={{
                           width: "100%",
                           maxWidth: 64,
-                          height: `${(mes.quantidade / maiorQuantidade) * 100}%`,
+                          height: `${
+                            (mes.quantidade / maiorQuantidade) * 100
+                          }%`,
                           minHeight: mes.quantidade > 0 ? 4 : 0,
                           backgroundColor: "#E56A2F",
                           borderRadius: "6px 6px 0 0",
@@ -875,7 +790,11 @@ export default function DashboardPage() {
 
                   {carregando ? (
                     <Box
-                      sx={{ display: "flex", justifyContent: "center", py: 3 }}
+                      sx={{
+                        display: "flex",
+                        justifyContent: "center",
+                        py: 3,
+                      }}
                     >
                       <CircularProgress size={24} />
                     </Box>
@@ -911,7 +830,9 @@ export default function DashboardPage() {
                               fontWeight: 700,
                             }}
                           >
-                            {(cliente.nome || "C").charAt(0).toUpperCase()}
+                            {(cliente.nome || "C")
+                              .charAt(0)
+                              .toUpperCase()}
                           </Box>
 
                           <Typography
@@ -984,7 +905,11 @@ export default function DashboardPage() {
 
                   {carregando ? (
                     <Box
-                      sx={{ display: "flex", justifyContent: "center", py: 3 }}
+                      sx={{
+                        display: "flex",
+                        justifyContent: "center",
+                        py: 3,
+                      }}
                     >
                       <CircularProgress size={24} />
                     </Box>
@@ -1089,7 +1014,11 @@ export default function DashboardPage() {
                     }}
                   >
                     <Box
-                      sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1.5,
+                      }}
                     >
                       <Box
                         sx={{
@@ -1120,7 +1049,11 @@ export default function DashboardPage() {
                       </Box>
                     </Box>
 
-                    <Chip label="Estático" size="small" variant="outlined" />
+                    <Chip
+                      label="Estático"
+                      size="small"
+                      variant="outlined"
+                    />
                   </Box>
 
                   {maquinas.map((maquina) => {
@@ -1152,12 +1085,19 @@ export default function DashboardPage() {
                             {maquina.nome}
                           </Typography>
 
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                          >
                             {maquina.codigo}
                           </Typography>
                         </Box>
 
-                        <Chip label={maquina.status} color={cor} size="small" />
+                        <Chip
+                          label={maquina.status}
+                          color={cor}
+                          size="small"
+                        />
                       </Box>
                     );
                   })}
