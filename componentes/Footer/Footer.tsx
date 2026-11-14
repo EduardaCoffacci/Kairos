@@ -156,7 +156,7 @@ export default function Footer() {
                 <FaEnvelope className="mt-1 shrink-0 text-white" size={24} />
 
                 <div className="flex flex-col gap-2 text-sm text-white/80 sm:text-base">
-                  <span>comercial@kairosindustrial.com.br</span>
+                  <span>adm@kairosindustrial.com.br</span>
                 </div>
               </div>
             </div>

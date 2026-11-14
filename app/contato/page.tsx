@@ -2,7 +2,6 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 
-
 import { useState } from "react";
 import {
   ChevronDown,
@@ -55,7 +54,7 @@ const contactCards = [
     title: "Horário",
     icon: Clock,
   },
-]as const;
+] as const;
 
 // Regras de validação do formulário
 const contactSchema = z.object({
@@ -83,9 +82,7 @@ const contactSchema = z.object({
     .trim()
     .max(100, "A empresa deve ter no máximo 100 caracteres."),
 
-  assunto: z
-    .string()
-    .min(1, "Selecione um equipamento."),
+  assunto: z.string().min(1, "Selecione um equipamento."),
 
   mensagem: z
     .string()
@@ -95,7 +92,6 @@ const contactSchema = z.object({
 });
 
 type FormData = z.infer<typeof contactSchema>;
-
 
 const initialFormData: FormData = {
   nome: "",
@@ -111,8 +107,7 @@ function ContactPage() {
   const [mensagemErro, setMensagemErro] = useState("");
   const [enviando, setEnviando] = useState(false);
 
-  
-const {
+  const {
     register,
     handleSubmit,
     reset,
@@ -124,7 +119,7 @@ const {
     reValidateMode: "onChange",
   });
 
-const enviarFormulario = async (data: FormData) => {
+  const enviarFormulario = async (data: FormData) => {
     setMensagemSucesso("");
     setMensagemErro("");
     setEnviando(true);
@@ -149,15 +144,13 @@ const enviarFormulario = async (data: FormData) => {
       setMensagemSucesso("Mensagem enviada com sucesso!");
     } catch (error) {
       console.error("Erro ao enviar formulário:", error);
-      setMensagemErro(
-        "Não foi possível enviar sua mensagem. Tente novamente.",
-      );
+      setMensagemErro("Não foi possível enviar sua mensagem. Tente novamente.");
     } finally {
       setEnviando(false);
     }
   };
 
-   return (
+  return (
     <>
       <Header darkText />
 
@@ -180,8 +173,8 @@ const enviarFormulario = async (data: FormData) => {
           </h1>
 
           <p className="max-w-xl text-sm leading-6 text-white/90 sm:text-base">
-            Estamos prontos para entender suas necessidades e oferecer
-            soluções industriais para o seu projeto.
+            Estamos prontos para entender suas necessidades e oferecer soluções
+            industriais para o seu projeto.
           </p>
         </div>
       </section>
@@ -190,7 +183,6 @@ const enviarFormulario = async (data: FormData) => {
       <section className="w-full bg-slate-50 pb-10 pt-10 sm:pb-14 sm:pt-12 lg:pb-16 lg:pt-14">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.1fr_1fr]">
-
             {/* FORMULÁRIO */}
             <div className="rounded-xl bg-white p-5 shadow-sm sm:p-7 lg:p-8">
               <div className="mb-7 flex items-center gap-3">
@@ -298,9 +290,7 @@ const enviarFormulario = async (data: FormData) => {
                     aria-invalid={!!errors.mensagem}
                     placeholder="Descreva sua necessidade e como podemos ajudar..."
                     className={`w-full resize-none rounded-md border bg-slate-50 px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-[var(--kairos-orange)] focus:ring-1 focus:ring-[var(--kairos-orange)] ${
-                      errors.mensagem
-                        ? "border-red-500"
-                        : "border-slate-300"
+                      errors.mensagem ? "border-red-500" : "border-slate-300"
                     }`}
                   />
 
@@ -423,7 +413,6 @@ const enviarFormulario = async (data: FormData) => {
   );
 }
 
-
 /* CAMPO DO FORMULÁRIO */
 
 interface FormFieldProps {
@@ -446,8 +435,7 @@ function FormField({
   return (
     <div>
       <label className="mb-2 block text-sm font-medium text-slate-700">
-        {label}{" "}
-        {required && <span className="text-orange-600">*</span>}
+        {label} {required && <span className="text-orange-600">*</span>}
       </label>
 
       <input
@@ -461,18 +449,12 @@ function FormField({
         }`}
       />
 
-      {error && (
-        <p className="mt-1.5 text-sm text-red-600">
-          {error}
-        </p>
-      )}
+      {error && <p className="mt-1.5 text-sm text-red-600">{error}</p>}
     </div>
   );
 }
 
-
 /* CARD DE INFORMAÇÃO */
-
 
 interface InfoCardProps {
   icon: ReactNode;
@@ -486,19 +468,18 @@ function InfoCard({ icon, title, type }: InfoCardProps) {
       <>
         Navegantes - SC
         <br />
-        CEP:
       </>
     ),
 
     phone: (
       <>
-        (47) 0000-0000
+        (47) 99218-7965
         <br />
-        (47) 0000-0000
+        (47) 999341916
       </>
     ),
 
-    email: <>comercial@kairosindustrial.com.br</>,
+    email: <>adm@kairosindustrial.com.br</>,
 
     hours: (
       <>
@@ -521,9 +502,7 @@ function InfoCard({ icon, title, type }: InfoCardProps) {
         <h3 className="font-semibold text-slate-800">{title}</h3>
       </div>
 
-      <div className="text-sm leading-5 text-slate-500">
-        {content[type]}
-      </div>
+      <div className="text-sm leading-5 text-slate-500">{content[type]}</div>
     </div>
   );
 }
