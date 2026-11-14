@@ -1,21 +1,17 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Grid from "@mui/material/Grid";
+import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 
 import {
   Box,
   Card,
   CardContent,
   Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Chip,
   CircularProgress,
   TextField,
@@ -234,6 +230,73 @@ export default function DashboardPage() {
 
     return correspondeBusca && correspondeStatus && correspondeCliente;
   });
+
+  // COLUNAS DO DATAGRID
+
+  const colunasOrdens: GridColDef<OrdemRecente>[] = [
+    {
+      field: "id",
+      headerName: "Nº OS",
+      width: 100,
+      renderCell: (params) => <strong>#{params.row.id}</strong>,
+    },
+    {
+      field: "cliente",
+      headerName: "Cliente",
+      minWidth: 200,
+      flex: 1,
+    },
+    {
+      field: "pecas",
+      headerName: "Peças",
+      minWidth: 280,
+      flex: 1.5,
+      sortable: false,
+      renderCell: (params) => (
+        <Box sx={{ py: 1, whiteSpace: "normal" }}>
+          {params.row.pecas?.length > 0
+            ? params.row.pecas
+                .map(
+                  (peca) =>
+                    `${peca.nome} (${peca.material || "Sem material"})`,
+                )
+                .join(", ")
+            : "Nenhuma peça cadastrada"}
+        </Box>
+      ),
+    },
+    {
+      field: "quantidade",
+      headerName: "Qtd.",
+      width: 100,
+      sortable: false,
+      align: "center",
+      headerAlign: "center",
+      renderCell: (params) =>
+        (params.row.pecas ?? []).reduce(
+          (total, peca) => total + (Number(peca.quantidade) || 0),
+          0,
+        ),
+    },
+    {
+      field: "prazo",
+      headerName: "Prazo de entrega",
+      width: 170,
+      renderCell: (params) => formatarData(params.row.prazo),
+    },
+    {
+      field: "status",
+      headerName: "Status",
+      width: 160,
+      renderCell: (params) => (
+        <Chip
+          label={String(params.row.status ?? "Não informado").replaceAll("_", " ")}
+          color={corStatus(params.row.status ?? "")}
+          size="small"
+        />
+      ),
+    },
+  ];
 
   // INDICADORES
 
@@ -577,7 +640,7 @@ export default function DashboardPage() {
                 </Grid>
               </Grid>
 
-              {/* TABELA */}
+              {/* DATAGRID */}
 
               {carregando ? (
                 <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
@@ -592,102 +655,68 @@ export default function DashboardPage() {
                   </Typography>
                 </Box>
               ) : (
-                <TableContainer
+                <Box
                   sx={{
                     width: "100%",
                     overflowX: "auto",
                   }}
                 >
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>
-                          <strong>Nº</strong>
-                        </TableCell>
+                  <Box
+                    sx={{
+                      minWidth: 1050,
+                      height: 520,
+                    }}
+                  >
+                    <DataGrid
+                      rows={ordensFiltradas}
+                      columns={colunasOrdens}
+                      getRowId={(row) => row.id}
+                      rowHeight={58}
+                      pageSizeOptions={[5, 10, 25, 50]}
+                      initialState={{
+                        pagination: {
+                          paginationModel: {
+                            pageSize: 10,
+                            page: 0,
+                          },
+                        },
+                      }}
+                      disableRowSelectionOnClick
+                      onRowClick={(params) =>
+                        router.push(
+                          `/adm/ordens-servico/${params.row.id}`,
+                        )
+                      }
+                      sx={{
+                        border: "1px solid #EAECF0",
+                        borderRadius: 2,
+                        backgroundColor: "#FFFFFF",
 
-                        <TableCell>
-                          <strong>Cliente</strong>
-                        </TableCell>
+                        "& .MuiDataGrid-columnHeaders": {
+                          backgroundColor: "#F8F9FB",
+                          color: "#344054",
+                          fontWeight: 700,
+                        },
 
-                        <TableCell>
-                          <strong>Peças</strong>
-                        </TableCell>
+                        "& .MuiDataGrid-columnHeaderTitle": {
+                          fontWeight: 700,
+                        },
 
-                        <TableCell>
-                          <strong>Qtd.</strong>
-                        </TableCell>
+                        "& .MuiDataGrid-row": {
+                          cursor: "pointer",
+                        },
 
-                        <TableCell>
-                          <strong>Prazo</strong>
-                        </TableCell>
+                        "& .MuiDataGrid-row:hover": {
+                          backgroundColor: "#FFF4EE",
+                        },
 
-                        <TableCell>
-                          <strong>Status</strong>
-                        </TableCell>
-                      </TableRow>
-                    </TableHead>
-
-                    <TableBody>
-                      {ordensFiltradas.map((ordem) => {
-                        const quantidade = (ordem.pecas ?? []).reduce(
-                          (total, peca) =>
-                            total + (Number(peca.quantidade) || 0),
-                          0,
-                        );
-
-                        return (
-                          <TableRow
-                            key={ordem.id}
-                            hover
-                            onClick={() =>
-                              router.push(`/adm/ordens-servico/${ordem.id}`)
-                            }
-                            sx={{
-                              cursor: "pointer",
-                              transition: "background-color 0.2s",
-                              "&:hover": {
-                                backgroundColor: "#FFF4EE",
-                              },
-                            }}
-                          >
-                            <TableCell>
-                              <strong>#{ordem.id}</strong>
-                            </TableCell>
-
-                            <TableCell>
-                              {ordem.cliente || "Cliente não informado"}
-                            </TableCell>
-
-                            <TableCell sx={{ minWidth: 180 }}>
-                              {ordem.pecas?.length > 0
-                                ? ordem.pecas
-                                    .map(
-                                      (peca) =>
-                                        `${peca.nome} (${peca.material || "Sem material"})`,
-                                    )
-                                    .join(", ")
-                                : "Nenhuma peça cadastrada"}
-                            </TableCell>
-
-                            <TableCell>{quantidade}</TableCell>
-
-                            <TableCell>{formatarData(ordem.prazo)}</TableCell>
-
-                            <TableCell>
-                              <Chip
-                                label={String(
-                                  ordem.status ?? "Não informado",
-                                ).replaceAll("_", " ")}
-                                color={corStatus(ordem.status ?? "")}
-                                size="small"
-                              />
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                        "& .MuiDataGrid-cell": {
+                          borderColor: "#F0F1F4",
+                        },
+                      }}
+                    />
+                  </Box>
+                </Box>
               )}
 
               {!carregando && ordensRecentes.length > 0 && (

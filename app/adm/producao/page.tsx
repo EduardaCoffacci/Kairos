@@ -47,8 +47,8 @@ import {
   AlertCircle,
   CalendarDays,
   Package,
-  Eye,
   FilterX,
+  Printer,
 } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -1698,7 +1698,7 @@ export default function ProducaoPage() {
                                                       },
                                                     }}
                                                   >
-                                                    <Eye size={17} />
+                                                    <ClipboardList size={17} />
                                                   </IconButton>
                                                 </Tooltip>
 
@@ -1967,187 +1967,370 @@ export default function ProducaoPage() {
         </DialogActions>
       </Dialog>
 
-      {/* Dialog de visualização */}
+      {/* Dialog da ficha de produção */}
       <Dialog
         open={dialogVisualizacao}
         onClose={() => setDialogVisualizacao(false)}
+        maxWidth="md"
         fullWidth
-        maxWidth="sm"
         slotProps={{
           paper: {
-            sx: { borderRadius: 3 },
+            id: "ficha-producao-print",
+            sx: {
+              borderRadius: 2,
+              overflow: "hidden",
+            },
           },
         }}
       >
-        <DialogTitle
-          sx={{
-            fontWeight: 750,
-            color: cores.texto,
-            borderBottom: `1px solid ${cores.borda}`,
-          }}
-        >
-          Detalhes da produção #{producaoSelecionada?.id}
-        </DialogTitle>
-
-        <DialogContent sx={{ pt: "20px !important" }}>
+        <DialogContent sx={{ p: { xs: 2, sm: 4 } }}>
           {producaoSelecionada && (
-            <Box sx={{ mt: 1, display: "grid", gap: 2.2 }}>
+            <Box>
+              {/* Cabeçalho da ficha */}
               <Box
                 sx={{
-                  p: 2,
-                  borderRadius: 2,
-                  backgroundColor: "#F6F8FB",
-                  display: "grid",
-                  gap: 1.5,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  borderBottom: "3px solid #E56A2F",
+                  pb: 2,
+                  mb: 3,
+                  gap: 2,
                 }}
               >
-                <Typography>
-                  <strong>Ordem de serviço:</strong> #
-                  {producaoSelecionada.itemOrdem?.ordem?.id ?? "-"}
-                </Typography>
-
-                <Typography>
-                  <strong>Cliente:</strong>{" "}
-                  {producaoSelecionada.itemOrdem?.ordem?.cliente?.nome ??
-                    "Não informado"}
-                </Typography>
-
-                <Typography>
-                  <strong>Peça:</strong>{" "}
-                  {producaoSelecionada.itemOrdem?.peca?.nome ?? "Não informada"}
-                </Typography>
-
-                <Typography>
-                  <strong>Processo:</strong>{" "}
-                  {producaoSelecionada.process?.name ?? "Não informado"}
-                </Typography>
-
-                <Typography>
-                  <strong>Sequência:</strong>{" "}
-                  {producaoSelecionada.sequence ?? "-"}
-                </Typography>
-
-                <Typography>
-                  <strong>Operador:</strong>{" "}
-                  {producaoSelecionada.operador?.name ?? "Não atribuído"}
-                </Typography>
-
                 <Box>
-                  <Typography component="span" sx={{ fontWeight: 700, mr: 1 }}>
-                    Status:
-                  </Typography>
-
-                  <Chip
-                    label={nomeStatus(producaoSelecionada.status)}
-                    size="small"
+                  <Typography
+                    variant="h4"
                     sx={{
-                      ...corStatus(producaoSelecionada.status),
-                      fontWeight: 650,
+                      color: cores.laranja,
+                      fontWeight: 800,
+                      letterSpacing: 1,
                     }}
-                  />
+                  >
+                    KAIROS
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: cores.secundario, letterSpacing: 1 }}
+                  >
+                    INDÚSTRIA
+                  </Typography>
+                </Box>
+
+                <Box sx={{ textAlign: "right" }}>
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: 800, color: cores.texto }}
+                  >
+                    FICHA DE PRODUÇÃO
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Controle de processo de usinagem
+                  </Typography>
+                  <Typography variant="body2" sx={{ mt: 0.5, fontWeight: 700 }}>
+                    Nº {producaoSelecionada.id}
+                  </Typography>
                 </Box>
               </Box>
 
+              {/* Identificação */}
               <Typography
-                variant="subtitle2"
-                sx={{ fontWeight: 700, color: cores.texto }}
+                variant="subtitle1"
+                sx={{
+                  fontWeight: 800,
+                  color: cores.texto,
+                  mb: 1.5,
+                }}
               >
-                Quantidades
+                1. Identificação
               </Typography>
 
               <Box
                 sx={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(2, 1fr)",
-                  gap: 1.5,
+                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                  gap: 2,
+                  mb: 3,
                 }}
               >
                 {[
                   {
-                    titulo: "Solicitada",
-                    valor: producaoSelecionada.itemOrdem?.quantidade ?? "-",
+                    label: "Ordem de serviço",
+                    value: `OS #${producaoSelecionada.itemOrdem?.ordem?.id ?? "-"}`,
                   },
                   {
-                    titulo: "Produzida",
-                    valor: producaoSelecionada.quantidadeProduzida,
+                    label: "Cliente",
+                    value:
+                      producaoSelecionada.itemOrdem?.ordem?.cliente?.nome ??
+                      "Não informado",
                   },
                   {
-                    titulo: "Aprovada",
-                    valor: producaoSelecionada.quantidadeAprovada,
+                    label: "Peça",
+                    value:
+                      producaoSelecionada.itemOrdem?.peca?.nome ??
+                      "Não informada",
                   },
                   {
-                    titulo: "Rejeitada",
-                    valor: producaoSelecionada.quantidadeRejeitada,
+                    label: "Quantidade solicitada",
+                    value: `${producaoSelecionada.itemOrdem?.quantidade ?? 0} unidades`,
                   },
-                ].map((item) => (
+                  {
+                    label: "Processo",
+                    value: producaoSelecionada.process?.name ?? "Não informado",
+                  },
+                  {
+                    label: "Sequência",
+                    value: `${producaoSelecionada.sequence ?? "-"}`,
+                  },
+                  {
+                    label: "Operador responsável",
+                    value:
+                      producaoSelecionada.operador?.name ?? "Não atribuído",
+                  },
+                  {
+                    label: "Status",
+                    value: nomeStatus(producaoSelecionada.status),
+                  },
+                ].map((campo) => (
                   <Box
-                    key={item.titulo}
+                    key={campo.label}
                     sx={{
-                      p: 1.8,
                       border: `1px solid ${cores.borda}`,
-                      borderRadius: 2,
+                      borderRadius: 1.5,
+                      p: 1.5,
+                      minWidth: 0,
                     }}
                   >
-                    <Typography variant="caption" color="text.secondary">
-                      {item.titulo}
-                    </Typography>
-
                     <Typography
-                      variant="h6"
-                      sx={{ fontWeight: 750, color: cores.texto }}
+                      variant="caption"
+                      sx={{
+                        color: cores.secundario,
+                        display: "block",
+                        mb: 0.5,
+                      }}
                     >
-                      {item.valor}
+                      {campo.label}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: cores.texto,
+                        fontWeight: 700,
+                        overflowWrap: "anywhere",
+                      }}
+                    >
+                      {campo.value}
                     </Typography>
                   </Box>
                 ))}
               </Box>
 
-              <Typography>
-                <strong>Início:</strong>{" "}
-                {formatarData(producaoSelecionada.dataInicio)}
+              {/* Quantidades */}
+              <Typography
+                variant="subtitle1"
+                sx={{ fontWeight: 800, color: cores.texto, mb: 1.5 }}
+              >
+                2. Controle de produção
               </Typography>
 
-              <Typography>
-                <strong>Conclusão:</strong>{" "}
-                {formatarData(producaoSelecionada.dataConclusao)}
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                  gap: 1.5,
+                  mb: 3,
+                }}
+              >
+                {[
+                  {
+                    label: "Produzida",
+                    value: producaoSelecionada.quantidadeProduzida,
+                  },
+                  {
+                    label: "Aprovada",
+                    value: producaoSelecionada.quantidadeAprovada,
+                  },
+                  {
+                    label: "Rejeitada",
+                    value: producaoSelecionada.quantidadeRejeitada,
+                  },
+                ].map((campo) => (
+                  <Box
+                    key={campo.label}
+                    sx={{
+                      textAlign: "center",
+                      border: `1px solid ${cores.borda}`,
+                      borderRadius: 2,
+                      p: 2,
+                    }}
+                  >
+                    <Typography variant="caption" color="text.secondary">
+                      {campo.label}
+                    </Typography>
+                    <Typography
+                      variant="h4"
+                      sx={{ fontWeight: 800, color: cores.texto, mt: 0.5 }}
+                    >
+                      {campo.value ?? 0}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      unidades
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+
+              {/* Datas */}
+              <Typography
+                variant="subtitle1"
+                sx={{ fontWeight: 800, color: cores.texto, mb: 1.5 }}
+              >
+                3. Datas
               </Typography>
 
-              <Typography>
-                <strong>Prazo da OS:</strong>{" "}
-                {formatarData(producaoSelecionada.itemOrdem?.ordem?.prazo)}
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                  gap: 1.5,
+                  mb: 3,
+                }}
+              >
+                {[
+                  {
+                    label: "Início",
+                    value: formatarData(producaoSelecionada.dataInicio),
+                  },
+                  {
+                    label: "Conclusão",
+                    value: formatarData(producaoSelecionada.dataConclusao),
+                  },
+                  {
+                    label: "Prazo da OS",
+                    value: formatarData(
+                      producaoSelecionada.itemOrdem?.ordem?.prazo,
+                    ),
+                  },
+                ].map((campo) => (
+                  <Box
+                    key={campo.label}
+                    sx={{
+                      border: `1px solid ${cores.borda}`,
+                      borderRadius: 1.5,
+                      p: 1.5,
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ display: "block" }}
+                    >
+                      {campo.label}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontWeight: 700, color: cores.texto, mt: 0.5 }}
+                    >
+                      {campo.value}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+
+              {/* Observações */}
+              <Typography
+                variant="subtitle1"
+                sx={{ fontWeight: 800, color: cores.texto, mb: 1.5 }}
+              >
+                4. Observações
               </Typography>
 
-              <Box>
+              <Box
+                sx={{
+                  border: `1px solid ${cores.borda}`,
+                  borderRadius: 1.5,
+                  p: 2,
+                  minHeight: 75,
+                  mb: 5,
+                }}
+              >
                 <Typography
-                  variant="subtitle2"
-                  sx={{ fontWeight: 700, color: cores.texto, mb: 0.5 }}
+                  variant="body2"
+                  sx={{ color: cores.texto, whiteSpace: "pre-wrap" }}
                 >
-                  Observações
-                </Typography>
-
-                <Typography variant="body2" color="text.secondary">
-                  {producaoSelecionada.observacoes || "Sem observações."}
+                  {producaoSelecionada.observacoes ||
+                    "Nenhuma observação registrada."}
                 </Typography>
               </Box>
+
+              {/* Assinaturas */}
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 5,
+                  mt: 5,
+                }}
+              >
+                <Box sx={{ textAlign: "center" }}>
+                  <Box sx={{ borderTop: "1px solid #667085", pt: 1 }}>
+                    <Typography variant="caption">
+                      Assinatura do operador
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box sx={{ textAlign: "center" }}>
+                  <Box sx={{ borderTop: "1px solid #667085", pt: 1 }}>
+                    <Typography variant="caption">
+                      Responsável pela conferência
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+
+              <Typography
+                variant="caption"
+                sx={{
+                  display: "block",
+                  textAlign: "center",
+                  color: cores.secundario,
+                  mt: 4,
+                }}
+              >
+                KAIROS INDÚSTRIA — Controle interno de produção
+              </Typography>
             </Box>
           )}
         </DialogContent>
 
         <DialogActions
+          className="nao-imprimir"
           sx={{
-            p: 2.5,
             borderTop: `1px solid ${cores.borda}`,
+            p: 2,
+            gap: 1,
           }}
         >
           <Button
             onClick={() => setDialogVisualizacao(false)}
-            sx={{
-              textTransform: "none",
-              color: cores.secundario,
-              fontWeight: 600,
-            }}
+            sx={{ textTransform: "none", color: cores.secundario }}
           >
             Fechar
+          </Button>
+
+          <Button
+            variant="contained"
+            startIcon={<Printer size={17} />}
+            onClick={() => window.print()}
+            sx={{
+              textTransform: "none",
+              fontWeight: 700,
+              backgroundColor: cores.laranja,
+              "&:hover": { backgroundColor: "#CF5D27" },
+            }}
+          >
+            Imprimir / Salvar PDF
           </Button>
         </DialogActions>
       </Dialog>
@@ -2227,6 +2410,40 @@ export default function ProducaoPage() {
           {mensagem}
         </Alert>
       </Snackbar>
+
+      {/* Estilos de impressão */}
+      <style jsx global>{`
+        @media print {
+          @page {
+            size: A4;
+            margin: 12mm;
+          }
+
+          body * {
+            visibility: hidden !important;
+          }
+
+          #ficha-producao-print,
+          #ficha-producao-print * {
+            visibility: visible !important;
+          }
+
+          #ficha-producao-print {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            max-width: none !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+          }
+
+          .nao-imprimir {
+            display: none !important;
+          }
+        }
+      `}</style>
     </Box>
   );
 }
