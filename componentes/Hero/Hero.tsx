@@ -1,5 +1,5 @@
 import React from "react";
-
+import Button from "../Button/Button";
 
 export default function Hero() {
   return (
@@ -8,7 +8,7 @@ export default function Hero() {
       <div className="relative z-10 flex min-h-[calc(100vh-80px)] flex-col items-center px-4 pt-20 sm:px-6 lg:pt-24 xl:pt-28">
         {/* Título */}
 
-        <h1 className="text-center text-[26px] font-bold leading-[1.05] sm:text-[30px] md:text-[36px] lg:text-[44px] xl:text-[66px]">
+        <h1 className="text-center text-[26px] font-bold leading-[1.1] sm:text-[30px] md:text-[36px] lg:text-[40px] xl:text-[44px]">
           CONVERTENDO BIOMASSA
           <br />
           EM ENERGIA LIMPA
@@ -27,25 +27,25 @@ export default function Hero() {
 
         {/* Botões */}
         <div className="mt-5 flex w-full flex-col items-center justify-center gap-3 sm:flex-row sm:gap-5 lg:mt-6">
-          <a
+          <Button
             href="#produtos"
-            className="w-full max-w-[320px] whitespace-nowrap rounded-lg bg-[var(--kairos-orange)] px-1 py-1 text-center text-[17px] font-bold transition hover:bg-[var(--kairos-orange)] sm:w-auto sm:px-9 sm:py-4 sm:text-[20px]"
+            className="w-full max-w-[320px] px-6 py-2 text-center text-[12px] sm:w-auto sm:px-9 sm:py-2.5 sm:text-[14px]"
           >
             Conheça Nossos Produtos
-          </a>
+          </Button>
 
-          <a
+          <Button
             href="#contato"
-            className="w-full max-w-[320px] rounded-lg border-2 border-white px-6 py-3 text-center text-[17px] font-bold transition hover:bg-white hover:text-black sm:w-auto sm:px-9 sm:py-4 sm:text-[20px]"
+            className="w-full max-w-[320px] px-6 py-2 text-center text-[12px] sm:w-auto sm:px-9 sm:py-2.5 sm:text-[14px]"
           >
             Fale com Especialista
-          </a>
+          </Button>
         </div>
 
         {/* Estatísticas */}
         <div className="mt-0 w-full pt-4 sm:mt-2 lg:mt-3 lg:pt-5">
           <div className="mx-auto w-fit border-t border-white/30 pt-4">
-            <div className="grid grid-cols-2 gap-x-8 gap-y-5 text-center sm:gap-x-12 md:grid-cols-4 md:gap-6">
+            <div className="grid grid-cols-1 justify-items-center gap-y-5 text-center sm:grid-cols-3 sm:gap-x-8 md:gap-10">
               <div>
                 <strong className="text-[20px] font-bold sm:text-[32px] lg:text-[35px]">
                   +15
@@ -63,16 +63,6 @@ export default function Hero() {
 
                 <p className="mt-1 text-[12px] uppercase sm:text-[14px] lg:text-[17px]">
                   Clientes satisfeitos
-                </p>
-              </div>
-
-              <div>
-                <strong className="text-[20px] font-bold sm:text-[32px] lg:text-[35px]">
-                  +15
-                </strong>
-
-                <p className="mt-1 text-[12px] uppercase sm:text-[14px] lg:text-[17px]">
-                  Estados atendidos
                 </p>
               </div>
 

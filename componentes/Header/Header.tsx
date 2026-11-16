@@ -9,177 +9,124 @@ interface HeaderProps {
   darkText?: boolean;
 }
 
+const navigation = [
+  { label: "Home", href: "/" },
+  { label: "Fornalhas", href: "/fornalhas" },
+  { label: "Produtos", href: "/produtos" },
+  { label: "Nossa História", href: "/nossahistoria" },
+  { label: "Contato", href: "/contato" },
+];
+
 const Header = ({ darkText = false }: HeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 500) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 500);
 
+    handleScroll();
     window.addEventListener("scroll", handleScroll);
 
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const lightHeader = darkText || isScrolled;
+  const textColor = lightHeader ? "text-black" : "text-white";
+  const lineColor = lightHeader ? "after:bg-black" : "after:bg-white";
+
+  const linkClass = `
+    relative transition-colors duration-500
+    after:absolute after:-bottom-2 after:left-0
+    after:h-[3px] after:w-0 after:transition-all
+    after:duration-700 hover:after:w-full
+    ${textColor} ${lineColor}
+  `;
+
+  const closeMenu = () => setIsMenuOpen(false);
 
   return (
     <header
       className={`fixed left-0 top-0 z-50 w-full border-b backdrop-blur-xl transition-all duration-500 ${
-        darkText || isScrolled
+        lightHeader
           ? "border-black/10 bg-white"
           : "border-white/20 bg-transparent"
       }`}
     >
-      {/* Conteúdo principal do Header */}
-      <div className="mx-auto flex h-[80px] max-w-[1700px] items-center justify-between px-4 sm:h-[90px] sm:px-6 lg:h-[110px] lg:px-8 xl:h-[130px]">
-        {/* Logo */}
-        <div className="w-[140px] sm:w-[160px] lg:w-[200px] xl:w-[250px]">
+      <div className="relative mx-auto flex h-[65px] max-w-[1700px] items-center justify-around px-4 sm:h-[70px] sm:px-6 lg:h-[80px] lg:px-8 xl:h-[90px]">
+        <Link
+          href="/"
+          className="w-[140px] sm:w-[160px] lg:w-[200px] xl:w-[250px]"
+          aria-label="Kairos - Página inicial"
+        >
           <Image
             src="/logo.png"
-            alt="Logo"
+            alt="Kairos"
             width={180}
             height={90}
-            className="h-auto w-full object-contain"
+            priority
+            className="w-[120px] sm:w-[140px] lg:w-[170px] xl:w-[200px]"
           />
-        </div>
+        </Link>
 
-        {/* Menu Desktop */}
-        <nav className="hidden flex-1 items-center justify-center gap-5 text-[14px] font-semibold lg:flex xl:gap-9 xl:text-[18px]">
-          <Link
-            href="/"
-            className={`relative transition-colors duration-500 ${
-              darkText || isScrolled ? "text-black" : "text-white"
-            } after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:w-0 after:transition-all after:duration-700 hover:after:w-full ${
-              darkText || isScrolled ? "after:bg-black" : "after:bg-white"
-            }`}
-          >
-            Home
-          </Link>
-
-          <Link
-            href="/fornalhas"
-            className={`relative transition-colors duration-500 ${
-              darkText || isScrolled ? "text-black" : "text-white"
-            } after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:w-0 after:transition-all after:duration-700 hover:after:w-full ${
-              isScrolled ? "after:bg-black" : "after:bg-white"
-            }`}
-          >
-            Fornalhas
-          </Link>
-
-          {/*
-          <Link
-            href="/clientes"
-            className={`relative transition-colors duration-500 ${
-              darkText || isScrolled ? "text-black" : "text-white"
-            } after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:w-0 after:transition-all after:duration-700 hover:after:w-full ${
-              isScrolled ? "after:bg-black" : "after:bg-white"
-            }`}
-          >
-            Clientes
-          </Link>
-          */}
-          <Link
-            href="/produtos"
-            className={`relative transition-colors duration-500 ${
-              darkText || isScrolled ? "text-black" : "text-white"
-            } after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:w-0 after:transition-all after:duration-700 hover:after:w-full ${
-              isScrolled ? "after:bg-black" : "after:bg-white"
-            }`}
-          >
-            Produtos
-          </Link>
-
-          <Link
-            href="/nossahistoria"
-            className={`relative transition-colors duration-500 ${
-              darkText || isScrolled ? "text-black" : "text-white"
-            } after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:w-0 after:transition-all after:duration-700 hover:after:w-full ${
-              isScrolled ? "after:bg-black" : "after:bg-white"
-            }`}
-          >
-            Nossa História
-          </Link>
-
-          <Link
-            href="/contato"
-            className={`relative transition-colors duration-500 ${
-              darkText || isScrolled ? "text-black" : "text-white"
-            } after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:w-0 after:transition-all after:duration-700 hover:after:w-full ${
-              isScrolled ? "after:bg-black" : "after:bg-white"
-            }`}
-          >
-            Contato
-          </Link>
+        {/* Menu desktop */}
+        <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center justify-center gap-5 text-[13px] font-semibold lg:flex xl:gap-7">
+          {navigation.map(({ label, href }) => (
+            <Link key={href} href={href} className={linkClass}>
+              {label}
+            </Link>
+          ))}
         </nav>
 
-        {/* Botão Desktop */}
-        <div className="hidden w-[250px] justify-end lg:flex xl:w-[370px]">
-          <Button href="/contato">Assistência Técnica</Button>
+        {/* Botão desktop */}
+        <div className="hidden w-[250px] justify-end py-0.5 text-[13px] lg:flex xl:w-[350px] xl:text-[12px]">
+          <Button className="py-1 text-[12px]" href="/contato">
+            Assistência Técnica
+          </Button>
         </div>
 
         {/* Botão mobile */}
         <button
           type="button"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          onClick={() => setIsMenuOpen((prev) => !prev)}
+          aria-label={isMenuOpen ? "Fechar menu" : "Abrir menu"}
+          aria-expanded={isMenuOpen}
           className="flex flex-col gap-1.5 lg:hidden"
         >
-          <span
-            className={`h-[3px] w-7 rounded transition-colors duration-500 ${
-              darkText || isScrolled ? "bg-black" : "bg-white"
-            }`}
-          ></span>
-
-          <span
-            className={`h-[3px] w-7 rounded transition-colors duration-500 ${
-              darkText || isScrolled ? "bg-black" : "bg-white"
-            }`}
-          ></span>
-
-          <span
-            className={`h-[3px] w-7 rounded transition-colors duration-500 ${
-              darkText || isScrolled ? "bg-black" : "bg-white"
-            }`}
-          ></span>
+          {[1, 2, 3].map((line) => (
+            <span
+              key={line}
+              className={`h-[3px] w-7 rounded transition-colors duration-500 ${
+                lightHeader ? "bg-black" : "bg-white"
+              }`}
+            />
+          ))}
         </button>
       </div>
 
       {/* Menu mobile */}
       <nav
-        className={`overflow-hidden border-t px-6 transition-all duration-1000 ease-out lg:hidden ${
+        className={`overflow-hidden border-t transition-all duration-500 ease-out lg:hidden ${
           isScrolled
             ? "border-black/10 bg-white/95"
             : "border-white/20 bg-black/90"
         } ${
           isMenuOpen
-            ? "max-h-[500px] translate-y-0 py-8 opacity-100"
-            : "max-h-0 -translate-y-4 py-0 opacity-0"
+            ? "max-h-[500px] translate-y-0 px-6 py-8 opacity-100"
+            : "max-h-0 -translate-y-4 px-6 py-0 opacity-0"
         }`}
       >
         <div
           className={`flex flex-col items-center gap-6 transition-colors duration-500 ${
-            isScrolled ? "text-black" : "text-white"
+            lightHeader ? "text-black" : "text-white"
           }`}
         >
-          <Link href="/">Home</Link>
+          {navigation.map(({ label, href }) => (
+            <Link key={href} href={href} onClick={closeMenu}>
+              {label}
+            </Link>
+          ))}
 
-          <Link href="/fornalhas">Fornalhas</Link>
-
-          <Link href="/produtos">Produtos</Link>
-          {/* <Link href="/clientes">Clientes</Link> */}
-
-          <Link href="/nossahistoria">Nossa História</Link>
-
-          <Link href="/contato">Contato</Link>
-
-          <Button href="/contato"> Assistência Técnica</Button>
+          <Button href="/contato">Assistência Técnica</Button>
         </div>
       </nav>
     </header>
