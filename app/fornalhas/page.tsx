@@ -1,3 +1,4 @@
+
 import Image from "next/image";
 import Header from "@/componentes/Header/Header";
 import Footer from "@/componentes/Footer/Footer";
@@ -59,7 +60,6 @@ export default function FornalhasPage() {
         {/* HERO */}
         <section className="relative min-h-[700px] overflow-hidden">
           {/* Imagem de fundo */}
-
           <Image
             src={"/images/fornalhas/imagefornalha.jpeg"}
             alt="Fornalha industrial"
@@ -74,8 +74,8 @@ export default function FornalhasPage() {
           {/* Gradiente */}
           <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-transparent" />
 
-          <div className="relative z-10 mx-auto flex min-h-[700px] max-w-7xl items-center pt-50 px-6 py-24 lg:px-8">
-            <div className="max-w-3xl">
+          <div className="container-kairos relative z-10 flex min-h-[700px] items-center pt-50 py-24">
+            <div className="w-full min-w-0 max-w-3xl">
               <span className="mb-5 inline-block border-l-4 border-[var(--kairos-orange)] pl-4 text-sm font-semibold uppercase tracking-[0.25em] text-[var(--kairos-orange)]">
                 Soluções térmicas industriais
               </span>
@@ -112,9 +112,9 @@ export default function FornalhasPage() {
         </section>
 
         {/* INTRODUÇÃO */}
-        <section className="bg-[var(--kairos-black)] px-6 py-24 lg:px-8">
-          <div className="mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-2">
-            <div>
+        <section className="bg-[var(--kairos-black)] py-24">
+          <div className="container-kairos grid min-w-0 items-center gap-14 lg:grid-cols-2">
+            <div className="min-w-0">
               <span className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--kairos-orange)]">
                 Engenharia e desempenho
               </span>
@@ -140,7 +140,7 @@ export default function FornalhasPage() {
               </p>
             </div>
 
-            <div className="relative h-[450px] overflow-hidden rounded-2xl">
+            <div className="relative h-[450px] min-w-0 overflow-hidden rounded-2xl">
               <Image
                 src={"/images/fornalhas/imagefornalha.jpeg"}
                 alt="Equipamento industrial"
@@ -154,8 +154,8 @@ export default function FornalhasPage() {
         </section>
 
         {/* SOLUÇÕES */}
-        <section id="solucoes" className="bg-[#080808] px-6 py-24 lg:px-8">
-          <div className="mx-auto max-w-7xl">
+        <section id="solucoes" className="bg-[#080808] py-24">
+          <div className="container-kairos">
             <div className="max-w-2xl">
               <span className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--kairos-orange)]">
                 Nossas soluções
@@ -172,11 +172,11 @@ export default function FornalhasPage() {
               </p>
             </div>
 
-            <div className="mt-14 grid gap-7 md:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-14 grid w-full min-w-0 gap-7 md:grid-cols-2 lg:grid-cols-3">
               {applications.map((application) => (
                 <article
                   key={application.title}
-                  className="group overflow-hidden rounded-2xl border border-white/10 bg-[#101010] transition duration-300 hover:-translate-y-2 hover:border-[var(--kairos-orange)]/60"
+                  className="group min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-[#101010] transition duration-300 hover:-translate-y-2 hover:border-[var(--kairos-orange)]/60"
                 >
                   <div className="relative h-64 overflow-hidden">
                     <Image
@@ -190,7 +190,9 @@ export default function FornalhasPage() {
                   </div>
 
                   <div className="p-7">
-                    <h3 className="text-2xl font-bold">{application.title}</h3>
+                    <h3 className="text-2xl font-bold">
+                      {application.title}
+                    </h3>
 
                     <p className="mt-4 leading-7 text-gray-400">
                       {application.description}
@@ -215,7 +217,7 @@ export default function FornalhasPage() {
 
           <div className="absolute inset-0 bg-black/75" />
 
-          <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="container-kairos relative z-10">
             <div className="max-w-3xl">
               <span className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--kairos-orange)]">
                 Desempenho industrial
@@ -235,22 +237,22 @@ export default function FornalhasPage() {
               </p>
             </div>
 
-            <div className="mt-14 grid gap-5 sm:grid-cols-3">
-              <div className="border border-white/20 bg-black/40 p-7 backdrop-blur-sm">
+            <div className="mt-14 grid w-full min-w-0 gap-5 sm:grid-cols-3">
+              <div className="min-w-0 border border-white/20 bg-black/40 p-7 backdrop-blur-sm">
                 <p className="text-4xl font-bold text-[var(--kairos-orange)]">
                   +
                 </p>
                 <p className="mt-2 text-lg font-semibold">Eficiência</p>
               </div>
 
-              <div className="border border-white/20 bg-black/40 p-7 backdrop-blur-sm">
+              <div className="min-w-0 border border-white/20 bg-black/40 p-7 backdrop-blur-sm">
                 <p className="text-4xl font-bold text-[var(--kairos-orange)]">
                   +
                 </p>
                 <p className="mt-2 text-lg font-semibold">Segurança</p>
               </div>
 
-              <div className="border border-white/20 bg-black/40 p-7 backdrop-blur-sm">
+              <div className="min-w-0 border border-white/20 bg-black/40 p-7 backdrop-blur-sm">
                 <p className="text-4xl font-bold text-[var(--kairos-orange)]">
                   +
                 </p>
@@ -261,10 +263,10 @@ export default function FornalhasPage() {
         </section>
 
         {/* DIFERENCIAIS */}
-        <section className="bg-black px-6 py-24 lg:px-8">
-          <div className="mx-auto max-w-7xl">
-            <div className="grid gap-14 lg:grid-cols-[0.8fr_1.2fr]">
-              <div>
+        <section className="bg-black py-24">
+          <div className="container-kairos">
+            <div className="grid min-w-0 gap-14 lg:grid-cols-[0.8fr_1.2fr]">
+              <div className="min-w-0">
                 <span className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--kairos-orange)]">
                   Diferenciais
                 </span>
@@ -279,11 +281,11 @@ export default function FornalhasPage() {
                 </p>
               </div>
 
-              <div className="grid gap-5 sm:grid-cols-2">
+              <div className="grid min-w-0 gap-5 sm:grid-cols-2">
                 {differentials.map((item) => (
                   <div
                     key={item.number}
-                    className="rounded-xl border border-white/10 bg-[var(--kairos-card)] p-7 transition hover:border-[var(--kairos-orange)]/60"
+                    className="min-w-0 rounded-xl border border-white/10 bg-[var(--kairos-card)] p-7 transition hover:border-[var(--kairos-orange)]/60"
                   >
                     <span className="text-sm font-bold text-[var(--kairos-orange)]">
                       {item.number}
@@ -302,32 +304,34 @@ export default function FornalhasPage() {
         </section>
 
         {/* CTA */}
-        <section className="relative overflow-hidden bg-[var(--kairos-dark)] px-6 py-24 lg:px-8">
+        <section className="relative overflow-hidden bg-[var(--kairos-dark)] py-24">
           <div className="absolute -right-40 -top-40 h-96 w-96 rounded-full bg-[var(--kairos-orange)]/10 blur-3xl" />
 
-          <div className="relative z-10 mx-auto max-w-5xl text-center">
-            <span className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--kairos-orange)]">
-              Fale com a Kairos
-            </span>
-
-            <h2 className="mt-5 text-4xl font-bold md:text-6xl">
-              Precisa de uma solução
-              <span className="block text-[var(--kairos-orange)]">
-                em fornalhas?
+          <div className="container-kairos relative z-10">
+            <div className="mx-auto w-full min-w-0 max-w-5xl text-center">
+              <span className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--kairos-orange)]">
+                Fale com a Kairos
               </span>
-            </h2>
 
-            <p className="mx-auto mt-6 max-w-2xl leading-8 text-gray-400">
-              Nossa equipe está pronta para entender sua necessidade e encontrar
-              uma solução adequada para o seu processo industrial.
-            </p>
+              <h2 className="mt-5 text-4xl font-bold md:text-6xl">
+                Precisa de uma solução
+                <span className="block text-[var(--kairos-orange)]">
+                  em fornalhas?
+                </span>
+              </h2>
 
-            <a
-              href="/contato"
-              className="mt-9 inline-block rounded-md bg-[var(--kairos-orange)] px-8 py-4 font-semibold transition hover:bg-[#f15f20]"
-            >
-              Solicitar orçamento
-            </a>
+              <p className="mx-auto mt-6 max-w-2xl leading-8 text-gray-400">
+                Nossa equipe está pronta para entender sua necessidade e encontrar
+                uma solução adequada para o seu processo industrial.
+              </p>
+
+              <a
+                href="/contato"
+                className="mt-9 inline-block rounded-md bg-[var(--kairos-orange)] px-8 py-4 font-semibold transition hover:bg-[#f15f20]"
+              >
+                Solicitar orçamento
+              </a>
+            </div>
           </div>
         </section>
       </main>

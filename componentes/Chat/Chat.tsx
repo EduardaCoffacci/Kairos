@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -34,6 +35,16 @@ export default function AtendenteWhatsApp() {
   const socketRef = useRef<Socket | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
+  // Permite abrir o chat pelos botões do site.
+  useEffect(() => {
+  const abrirChat = () => setChatOpen(true);
+
+  window.addEventListener("abrir-chat", abrirChat);
+  return () => window.removeEventListener("abrir-chat", abrirChat);
+}, []);
+
+
+  // Evita mensagens duplicadas.
   const addMessage = useCallback((incoming: Message) => {
     setMessages((current) => {
       if (current.some((item) => item._id === incoming._id)) {
@@ -45,99 +56,86 @@ export default function AtendenteWhatsApp() {
   }, []);
 
   // Recupera uma conversa existente, se houver.
-  // Se não houver, aguarda o visitante informar o nome.
   useEffect(() => {
-    let cancelled = false;
+  let cancelled = false;
 
-    async function initializeChat() {
-      setLoading(true);
-      setError("");
-      setClosedNotice("");
+  async function initializeChat() {
+    setLoading(true);
+    setError("");
+    setClosedNotice("");
 
-      try {
-        let visitorId = localStorage.getItem(CHAT_CONFIG.visitorStorageKey);
+    try {
+      const visitorId =
+        localStorage.getItem(CHAT_CONFIG.visitorStorageKey) ||
+        `visitante-${crypto.randomUUID()}`;
 
-        if (!visitorId) {
-          visitorId = `visitante-${crypto.randomUUID()}`;
-          localStorage.setItem(CHAT_CONFIG.visitorStorageKey, visitorId);
-        }
+      localStorage.setItem(CHAT_CONFIG.visitorStorageKey, visitorId);
 
-        const conversationId = localStorage.getItem(
-          CHAT_CONFIG.conversationStorageKey,
-        );
+      const conversationId = localStorage.getItem(
+        CHAT_CONFIG.conversationStorageKey,
+      );
+      const visitorToken = localStorage.getItem(
+        CHAT_CONFIG.visitorTokenStorageKey,
+      );
 
-        const visitorToken = localStorage.getItem(
-          CHAT_CONFIG.visitorTokenStorageKey,
-        );
+      let activeConversation: Conversation | null = null;
 
-        let activeConversation: Conversation | null = null;
-
-        if (conversationId && visitorToken) {
-          try {
-            const savedConversation = await fetchVisitorConversation(
-              conversationId,
-              visitorToken,
-            );
-
-            if (
-              savedConversation._id === conversationId &&
-              savedConversation.visitorId === visitorId &&
-              savedConversation.status === "open"
-            ) {
-              activeConversation = savedConversation;
-            }
-          } catch (err) {
-            console.warn("Falha ao recuperar a conversa:", err);
-          }
-        }
-
-        if (cancelled) return;
-
-        // Não cria conversa automaticamente.
-        // O visitante precisa informar o nome primeiro.
-        if (!activeConversation || !visitorToken) {
-          localStorage.removeItem(CHAT_CONFIG.conversationStorageKey);
-          localStorage.removeItem(CHAT_CONFIG.visitorTokenStorageKey);
-
-          setConversation(null);
-          setMessages([]);
-          return;
-        }
-
-        setConversation(activeConversation);
-
-        // Carrega o histórico usando o token do visitante.
-        const history = await fetchConversationMessages(
-          activeConversation._id,
-          visitorToken,
-        );
-
-        if (cancelled) return;
-
-        setMessages(history);
-      } catch (err) {
-        console.error("Erro ao iniciar chat:", err);
-
-        if (!cancelled) {
-          setError(
-            "Não foi possível conectar ao atendimento. Tente novamente.",
+      if (conversationId && visitorToken) {
+        try {
+          const saved = await fetchVisitorConversation(
+            conversationId,
+            visitorToken,
           );
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
+
+          if (
+            saved._id === conversationId &&
+            saved.visitorId === visitorId &&
+            saved.status === "open"
+          ) {
+            activeConversation = saved;
+          }
+        } catch (err) {
+          console.warn("Falha ao recuperar a conversa:", err);
         }
       }
+
+      if (cancelled) return;
+
+      if (!activeConversation || !visitorToken) {
+        localStorage.removeItem(CHAT_CONFIG.conversationStorageKey);
+        localStorage.removeItem(CHAT_CONFIG.visitorTokenStorageKey);
+        setConversation(null);
+        setMessages([]);
+        return;
+      }
+
+      setConversation(activeConversation);
+
+      const history = await fetchConversationMessages(
+        activeConversation._id,
+        visitorToken,
+      );
+
+      if (!cancelled) setMessages(history);
+    } catch (err) {
+      console.error("Erro ao iniciar chat:", err);
+
+      if (!cancelled) {
+        setError("Não foi possível conectar ao atendimento. Tente novamente.");
+      }
+    } finally {
+      if (!cancelled) setLoading(false);
     }
+  }
 
-    void initializeChat();
+  void initializeChat();
 
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  return () => {
+    cancelled = true;
+  };
+}, []);
 
-  // Cria a conversa somente depois que o visitante informa o nome.
+  // Cria a conversa depois que o visitante informa o nome.
   async function startConversation(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -426,15 +424,17 @@ export default function AtendenteWhatsApp() {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-5 right-5 z-50 font-sans sm:bottom-6 sm:right-6">
+      {/* Janela do atendimento */}
       {chatOpen && (
-        <div className="absolute bottom-24 right-0 flex h-[460px] max-h-[calc(100dvh-140px)] w-[320px] max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+        <div className="absolute bottom-[82px] right-0 flex h-[min(620px,calc(100dvh-120px))] w-[370px] max-w-[calc(100vw-24px)] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl sm:w-[390px]">
+
           {/* Cabeçalho */}
-          <div className="flex shrink-0 items-center gap-3 bg-[var(--kairos-orange)] p-4 text-white">
-            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-white">
+          <header className="flex shrink-0 items-center gap-3 bg-[var(--kairos-orange)] px-5 py-4 text-white">
+            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-white/80">
               <Image
                 src="/atendente.jpg"
-                alt="Atendente da Kairos"
+                alt="Atendimento Kairos"
                 fill
                 sizes="48px"
                 className="object-cover"
@@ -442,63 +442,80 @@ export default function AtendenteWhatsApp() {
             </div>
 
             <div className="min-w-0 flex-1">
-              <p className="font-semibold">Atendimento Kairos</p>
+              <h2 className="text-sm font-bold tracking-wide">
+                Kairos Industrial
+              </h2>
 
-              <p className="flex items-center gap-1.5 text-xs text-white/90">
+              <div className="mt-1 flex items-center gap-2">
                 <span
                   className={`h-2 w-2 rounded-full ${
                     conversation?.status === "closed"
                       ? "bg-red-300"
                       : socketReady
-                        ? "bg-green-400"
+                        ? "bg-green-300"
                         : "bg-yellow-300"
                   }`}
                 />
 
-                {loading
-                  ? "Preparando atendimento..."
-                  : conversation?.status === "closed"
-                    ? "Atendimento encerrado"
-                    : socketReady
-                      ? "Conectado ao atendimento"
-                      : conversation
-                        ? "Conectando..."
-                        : "Vamos conversar?"}
-              </p>
+                <span className="text-xs text-white/90">
+                  {loading
+                    ? "Preparando atendimento..."
+                    : conversation?.status === "closed"
+                      ? "Atendimento encerrado"
+                      : socketReady
+                        ? "Online • Atendimento conectado"
+                        : conversation
+                          ? "Conectando..."
+                          : "Atendimento ao cliente"}
+                </span>
+              </div>
             </div>
 
             <button
               type="button"
               onClick={() => setChatOpen(false)}
-              aria-label="Fechar janela de atendimento"
-              className="flex h-8 w-8 items-center justify-center rounded-full text-2xl transition hover:bg-black/10"
+              aria-label="Fechar atendimento"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-2xl text-white/90 transition hover:bg-white/15 hover:text-white"
             >
               ×
             </button>
-          </div>
+          </header>
 
+          {/* Identificação do visitante */}
           {!conversation ? (
-            /* Identificação do visitante */
             <form
               onSubmit={startConversation}
-              className="flex flex-1 flex-col justify-center gap-4 bg-gray-50 p-5"
+              className="flex flex-1 flex-col justify-center gap-5 bg-gray-50 p-6"
             >
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Olá! Seja bem-vindo à Kairos Industrial!
+              <div className="text-center">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-100">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.7"
+                    className="h-8 w-8 text-[var(--kairos-orange)]"
+                  >
+                    <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 8.4 8.4 0 0 1-4-.9L3 21l1.9-5.5a8.4 8.4 0 0 1-.9-4A8.5 8.5 0 0 1 12.5 3H13a8.5 8.5 0 0 1 8 8v.5Z" />
+                  </svg>
+                </div>
+
+                <h3 className="text-xl font-bold text-gray-900">
+                  Olá! Seja bem-vindo.
                 </h3>
 
-                <p className="mt-2 text-sm leading-relaxed text-gray-600">
-                  Para iniciar o atendimento, informe seu nome.
+                <p className="mt-2 text-sm leading-relaxed text-gray-500">
+                  Estamos prontos para ajudar você. Informe seu nome para
+                  iniciar o atendimento.
                 </p>
               </div>
 
               <div>
                 <label
                   htmlFor="visitor-name"
-                  className="mb-1.5 block text-sm font-medium text-gray-700"
+                  className="mb-2 block text-sm font-semibold text-gray-700"
                 >
-                  Seu nome
+                  Como podemos chamar você?
                 </label>
 
                 <input
@@ -506,18 +523,21 @@ export default function AtendenteWhatsApp() {
                   type="text"
                   value={visitorName}
                   onChange={(event) => setVisitorName(event.target.value)}
-                  placeholder="Digite seu nome"
+                  placeholder="Digite seu nome completo"
                   minLength={2}
                   maxLength={80}
                   autoComplete="name"
                   required
                   disabled={loading || startingNewConversation}
-                  className="w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm text-gray-800 outline-none focus:border-[var(--kairos-orange)] disabled:bg-gray-100"
+                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-[var(--kairos-orange)] focus:ring-2 focus:ring-orange-100 disabled:bg-gray-100"
                 />
               </div>
 
               {error && (
-                <p role="alert" className="text-xs text-red-600">
+                <p
+                  role="alert"
+                  className="rounded-lg bg-red-50 p-3 text-xs text-red-600"
+                >
                   {error}
                 </p>
               )}
@@ -535,32 +555,52 @@ export default function AtendenteWhatsApp() {
                   startingNewConversation ||
                   visitorName.trim().length < 2
                 }
-                className="w-full rounded-xl bg-[var(--kairos-orange)] px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--kairos-orange)] px-4 py-3.5 text-sm font-bold text-white shadow-sm transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {startingNewConversation
                   ? "Iniciando atendimento..."
                   : "Iniciar atendimento"}
               </button>
+
+              <p className="text-center text-xs text-gray-400">
+                Atendimento oficial • Kairos Industrial
+              </p>
             </form>
           ) : (
             <>
-              {/* Histórico de mensagens */}
-              <div className="flex-1 space-y-3 overflow-y-auto bg-gray-50 p-4">
-                <div className="max-w-[95%] rounded-2xl rounded-tl-sm bg-white p-3 text-sm leading-relaxed text-gray-800 shadow-sm">
-                  Olá, {conversation.name}! Seja bem-vindo(a) à Kairos
-                  Industrial! 👋
-                  <p className="mt-2">
-                    Como podemos ajudar você? Envie sua mensagem e nossa equipe
-                    poderá responder por aqui.
-                  </p>
+              {/* Área das mensagens */}
+              <div className="flex flex-1 flex-col gap-4 overflow-y-auto bg-[#F5F6F8] p-4">
+
+                {/* Mensagem de boas-vindas */}
+                <div className="flex justify-start">
+                  <div className="max-w-[90%] rounded-2xl rounded-tl-sm border border-gray-100 bg-white p-3.5 shadow-sm">
+                    <p className="mb-1 text-xs font-bold text-[var(--kairos-orange)]">
+                      Atendimento Kairos
+                    </p>
+
+                    <p className="text-sm leading-relaxed text-gray-700">
+                      Olá, {conversation.name}! Seja bem-vindo(a) à Kairos
+                      Industrial! 👋
+                    </p>
+
+                    <p className="mt-2 text-sm leading-relaxed text-gray-700">
+                      Como podemos ajudar você? Envie sua mensagem e nossa
+                      equipe poderá responder por aqui.
+                    </p>
+
+                    <p className="mt-2 text-right text-[10px] text-gray-400">
+                      Atendimento
+                    </p>
+                  </div>
                 </div>
 
                 {loading && (
                   <p className="text-center text-xs text-gray-500">
-                    Preparando atendimento...
+                    Carregando mensagens...
                   </p>
                 )}
 
+                {/* Mensagens */}
                 {!loading &&
                   messages.map((item) => (
                     <div
@@ -572,23 +612,35 @@ export default function AtendenteWhatsApp() {
                       }`}
                     >
                       <div
-                        className={`max-w-[90%] rounded-2xl p-3 text-sm ${
+                        className={`max-w-[88%] rounded-2xl px-4 py-3 shadow-sm ${
                           item.sender === "visitor"
                             ? "rounded-tr-sm bg-[var(--kairos-orange)] text-white"
-                            : "rounded-tl-sm bg-white text-gray-800 shadow-sm"
+                            : "rounded-tl-sm border border-gray-100 bg-white text-gray-800"
                         }`}
                       >
-                        <p className="mb-1 text-[10px] opacity-70">
+                        <p
+                          className={`mb-1 text-[11px] font-semibold ${
+                            item.sender === "visitor"
+                              ? "text-white/75"
+                              : "text-[var(--kairos-orange)]"
+                          }`}
+                        >
                           {item.sender === "visitor"
                             ? "Você"
                             : "Atendimento Kairos"}
                         </p>
 
-                        <p className="whitespace-pre-wrap break-words">
+                        <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
                           {item.content}
                         </p>
 
-                        <p className="mt-1 text-right text-[10px] opacity-60">
+                        <p
+                          className={`mt-2 text-right text-[10px] ${
+                            item.sender === "visitor"
+                              ? "text-white/65"
+                              : "text-gray-400"
+                          }`}
+                        >
                           {new Date(item.createdAt).toLocaleTimeString(
                             "pt-BR",
                             {
@@ -604,48 +656,36 @@ export default function AtendenteWhatsApp() {
                 <div ref={bottomRef} />
               </div>
 
-              {/* Aviso de atendimento finalizado */}
+              {/* Atendimento encerrado */}
               {conversation.status === "closed" && (
-                <div
-                  role="status"
-                  className="shrink-0 border-t border-gray-200 bg-white p-4"
-                >
-                  <div className="flex flex-col items-center rounded-xl bg-gray-50 px-3 py-4 text-center">
-                    <div className="mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-green-100">
+                <div className="shrink-0 border-t border-gray-100 bg-white p-4">
+                  <div className="rounded-xl bg-gray-50 p-4 text-center">
+                    <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
                       <svg
-                        xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
                         className="h-6 w-6 text-green-600"
-                        aria-hidden="true"
                       >
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                        <path d="m9 11 3 3L22 4" />
+                        <path d="m5 12 4 4L19 6" />
                       </svg>
                     </div>
 
-                    <h3 className="text-base font-semibold text-gray-900">
+                    <h3 className="font-bold text-gray-900">
                       Atendimento finalizado
                     </h3>
 
-                    <p className="mt-1 text-sm leading-relaxed text-gray-600">
+                    <p className="mt-2 text-sm leading-relaxed text-gray-500">
                       {closedNotice ||
                         "Nossa equipe encerrou este atendimento. Agradecemos pelo contato!"}
-                    </p>
-
-                    <p className="mt-3 text-xs text-gray-500">
-                      Precisa de mais alguma coisa?
                     </p>
 
                     <button
                       type="button"
                       onClick={startNewConversation}
                       disabled={startingNewConversation || loading}
-                      className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--kairos-orange)] px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="mt-4 w-full rounded-xl bg-[var(--kairos-orange)] px-4 py-3 text-sm font-bold text-white transition hover:brightness-95 disabled:opacity-50"
                     >
                       Iniciar novo atendimento
                     </button>
@@ -653,21 +693,21 @@ export default function AtendenteWhatsApp() {
                 </div>
               )}
 
-              {/* Mensagens de erro */}
+              {/* Erros */}
               {error && (
                 <p
                   role="alert"
-                  className="shrink-0 bg-red-50 px-3 py-2 text-xs text-red-600"
+                  className="shrink-0 border-t border-red-100 bg-red-50 px-4 py-2 text-xs text-red-600"
                 >
                   {error}
                 </p>
               )}
 
-              {/* Campo para enviar mensagens */}
+              {/* Campo de envio */}
               {conversation.status !== "closed" && (
                 <form
                   onSubmit={sendMessage}
-                  className="flex shrink-0 gap-2 border-t border-gray-100 bg-white p-3"
+                  className="flex shrink-0 items-center gap-2 border-t border-gray-100 bg-white p-3"
                 >
                   <input
                     type="text"
@@ -681,7 +721,7 @@ export default function AtendenteWhatsApp() {
                       !socketReady ||
                       sending
                     }
-                    className="min-w-0 flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-800 outline-none focus:border-[var(--kairos-orange)] disabled:bg-gray-100"
+                    className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-[var(--kairos-orange)] focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                   />
 
                   <button
@@ -694,39 +734,59 @@ export default function AtendenteWhatsApp() {
                       !socketReady
                     }
                     aria-label="Enviar mensagem"
-                    className="rounded-xl bg-[var(--kairos-orange)] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--kairos-orange)] text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    {sending ? "..." : "Enviar"}
+                    {sending ? (
+                      <span className="text-sm">...</span>
+                    ) : (
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="h-5 w-5"
+                      >
+                        <path d="m22 2-7 20-4-9-9-4Z" />
+                        <path d="M22 2 11 13" />
+                      </svg>
+                    )}
                   </button>
                 </form>
               )}
             </>
           )}
+
+          {/* Rodapé */}
+          <div className="shrink-0 border-t border-gray-100 bg-white px-3 py-2 text-center">
+            <p className="text-[10px] tracking-wide text-gray-400">
+              Atendimento • Kairos Industrial
+            </p>
+          </div>
         </div>
       )}
 
       {/* Botão flutuante */}
-      <div className="relative ml-auto w-fit">
-        <button
-          type="button"
-          onClick={() => setChatOpen((open) => !open)}
-          aria-label={chatOpen ? "Fechar atendimento" : "Abrir atendimento"}
-          aria-expanded={chatOpen}
-          className="relative flex h-[58px] w-[58px] items-center justify-center transition-transform duration-300 hover:scale-105 sm:h-[65px] sm:w-[65px] lg:h-[75px] lg:w-[75px]"
-        >
-          <div className="sombra-abrindo relative h-full w-full overflow-hidden rounded-full border-4 border-white bg-[var(--kairos-orange)] shadow-lg">
-            <Image
-              src="/atendente.jpg"
-              alt="Atendimento da Kairos"
-              fill
-              sizes="(max-width: 640px) 58px, (max-width: 1024px) 65px, 75px"
-              className="object-cover"
-            />
-          </div>
-        </button>
+      <button
+        type="button"
+        onClick={() => setChatOpen((open) => !open)}
+        aria-label={chatOpen ? "Fechar atendimento" : "Abrir atendimento"}
+        aria-expanded={chatOpen}
+        className="relative ml-auto flex h-[62px] w-[62px] items-center justify-center rounded-full transition-transform duration-300 hover:scale-105 sm:h-[68px] sm:w-[68px]"
+      >
+        <div className="relative h-full w-full overflow-hidden rounded-full border-4 border-white bg-[var(--kairos-orange)] shadow-xl">
+          <Image
+            src="/atendente.jpg"
+            alt="Atendimento da Kairos"
+            fill
+            sizes="68px"
+            className="object-cover"
+          />
+        </div>
 
-        <span className="absolute bottom-1 right-1 h-3 w-3 rounded-full border-2 border-white bg-green-500 sm:h-4 sm:w-4" />
-      </div>
+        <span className="absolute bottom-1 right-1 h-3.5 w-3.5 rounded-full border-2 border-white bg-green-500" />
+      </button>
     </div>
   );
 }

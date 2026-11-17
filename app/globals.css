@@ -23,7 +23,11 @@ body {
     transform: translateY(-10px);
   }
 }
-
+@layer components {
+  .container-kairos {
+    @apply mx-auto w-full max-w-[1200px] px-6;
+  }
+}
 .animate-float {
   animation: float 2.5s ease-in-out infinite;
 }

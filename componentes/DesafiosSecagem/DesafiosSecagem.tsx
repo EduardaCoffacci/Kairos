@@ -38,9 +38,9 @@ export default function DesafiosSecagem() {
   return (
     <section
       id="desafios-secagem"
-      className="relative overflow-hidden bg-[var(--kairos-dark)] px-6 py-24 text-white md:py-32"
+      className="relative overflow-hidden bg-[var(--kairos-dark)] py-24 text-white md:py-32"
     >
-      <div className="mx-auto max-w-7xl">
+      <div className="container-kairos">
         {/* CABEÇALHO */}
         <div className="mb-14">
           <div className="flex items-center gap-4">
@@ -61,14 +61,14 @@ export default function DesafiosSecagem() {
             </div>
           </div>
 
-          <h2 className="mt-8 max-w-4xl text-4xl font-bold leading-tight md:text-6xl">
+          <h2 className="mt-8 w-full max-w-4xl text-4xl font-bold leading-tight md:text-6xl">
             O que pode comprometer
             <span className="block text-[var(--kairos-orange)]">
               a secagem dos grãos?
             </span>
           </h2>
 
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-300">
+          <p className="mt-6 w-full max-w-2xl text-lg leading-8 text-gray-300">
             Umidade, temperatura, consumo energético e qualidade da combustão
             são fatores importantes para a eficiência do processo e a
             preservação da produção.
@@ -76,14 +76,14 @@ export default function DesafiosSecagem() {
         </div>
 
         {/* CARDS */}
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid w-full min-w-0 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {challenges.map((desafio, index) => {
             const Icon = desafio.icon;
 
             return (
               <article
                 key={desafio.title}
-                className="group relative border border-white/10 bg-[var(--kairos-card)] p-7 transition duration-300 hover:-translate-y-1 hover:border-[var(--kairos-orange)]/60 md:p-8"
+                className="group relative min-w-0 border border-white/10 bg-[var(--kairos-card)] p-7 transition duration-300 hover:-translate-y-1 hover:border-[var(--kairos-orange)]/60 md:p-8"
               >
                 {/* NÚMERO DO CARD */}
                 <div className="mb-7 flex items-center justify-between">
@@ -116,13 +116,13 @@ export default function DesafiosSecagem() {
         </div>
 
         {/* OBSERVAÇÃO */}
-        <div className="mt-10 flex items-start gap-4 border-l-2 border-[var(--kairos-orange)] bg-[var(--kairos-card)] p-6 md:p-8">
+        <div className="mt-10 flex min-w-0 items-start gap-4 border-l-2 border-[var(--kairos-orange)] bg-[var(--kairos-card)] p-6 md:p-8">
           <AlertTriangle
             className="mt-1 h-6 w-6 shrink-0 text-[var(--kairos-orange)]"
             aria-hidden="true"
           />
 
-          <div>
+          <div className="min-w-0">
             <h3 className="font-semibold text-white">
               Controle e planejamento
             </h3>

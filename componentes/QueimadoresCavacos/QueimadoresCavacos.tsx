@@ -51,12 +51,12 @@ export default function QueimadoresCavacos() {
   return (
     <section
       id="beneficios-queimadores"
-      className="bg-[var(--kairos-black)] px-6 py-24 text-white md:py-32"
+      className="bg-[var(--kairos-black)] py-24 text-white md:py-32"
     >
-      <div className="mx-auto max-w-7xl">
+      <div className="container-kairos">
         {/* CABEÇALHO TÉCNICO */}
-        <div className="grid gap-8 border-b border-white/10 pb-12 md:grid-cols-[1fr_auto] md:items-end md:pb-14">
-          <div className="max-w-4xl">
+        <div className="grid min-w-0 gap-8 border-b border-white/10 pb-12 md:grid-cols-[minmax(0,1fr)_auto] md:items-end md:pb-14">
+          <div className="min-w-0 max-w-4xl">
             <span className="text-sm font-semibold uppercase tracking-[0.25em] text-[var(--kairos-orange)]">
               Tecnologia para o agronegócio
             </span>
@@ -77,7 +77,7 @@ export default function QueimadoresCavacos() {
           {/* IDENTIFICAÇÃO VISUAL */}
           <div className="flex items-center gap-4 md:flex-col md:items-end md:gap-2">
             <Flame
-              className="h-10 w-10 text-[var(--kairos-orange)] md:h-14 md:w-14"
+              className="h-10 w-10 shrink-0 text-[var(--kairos-orange)] md:h-14 md:w-14"
               strokeWidth={1.2}
               aria-hidden="true"
             />
@@ -96,14 +96,14 @@ export default function QueimadoresCavacos() {
 
         {/* DESTAQUE */}
         <div className="mt-14 border-l-2 border-[var(--kairos-orange)] bg-[var(--kairos-dark)] px-6 py-7 md:px-9 md:py-8">
-          <div className="flex items-start gap-5">
+          <div className="flex min-w-0 items-start gap-5">
             <Flame
               className="mt-1 h-7 w-7 shrink-0 text-[var(--kairos-orange)]"
               strokeWidth={1.7}
               aria-hidden="true"
             />
 
-            <div>
+            <div className="min-w-0">
               <h3 className="text-xl font-semibold md:text-2xl">
                 Energia térmica com aproveitamento de biomassa
               </h3>
@@ -120,7 +120,7 @@ export default function QueimadoresCavacos() {
 
         {/* BENEFÍCIOS */}
         <div className="mt-20">
-          <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <div className="flex min-w-0 flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div className="max-w-2xl">
               <span className="text-sm font-semibold uppercase tracking-[0.25em] text-[var(--kairos-orange)]">
                 Diferenciais
@@ -137,14 +137,14 @@ export default function QueimadoresCavacos() {
             </p>
           </div>
 
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-10 grid w-full min-w-0 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {benefits.map((beneficio, index) => {
               const Icon = beneficio.icone;
 
               return (
                 <article
                   key={beneficio.titulo}
-                  className="group border border-white/10 bg-[var(--kairos-card)] p-7 transition duration-300 hover:-translate-y-1 hover:border-[var(--kairos-orange)]/60 md:p-8"
+                  className="group min-w-0 border border-white/10 bg-[var(--kairos-card)] p-7 transition duration-300 hover:-translate-y-1 hover:border-[var(--kairos-orange)]/60 md:p-8"
                 >
                   {/* ÍCONE E NUMERAÇÃO */}
                   <div className="mb-7 flex items-center justify-between">

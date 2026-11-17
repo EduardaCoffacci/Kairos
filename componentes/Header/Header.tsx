@@ -52,7 +52,7 @@ const Header = ({ darkText = false }: HeaderProps) => {
           : "border-white/20 bg-transparent"
       }`}
     >
-      <div className="relative mx-auto flex h-[65px] max-w-[1700px] items-center justify-around px-4 sm:h-[70px] sm:px-6 lg:h-[80px] lg:px-8 xl:h-[90px]">
+      <div className="container-kairos relative flex h-[65px] items-center justify-between sm:h-[70px] lg:h-[80px] xl:h-[90px]">
         <Link
           href="/"
           className="w-[140px] sm:w-[160px] lg:w-[200px] xl:w-[250px]"
@@ -79,7 +79,11 @@ const Header = ({ darkText = false }: HeaderProps) => {
 
         {/* Botão desktop */}
         <div className="hidden w-[250px] justify-end py-0.5 text-[13px] lg:flex xl:w-[350px] xl:text-[12px]">
-          <Button className="py-1 text-[12px]" href="/contato">
+          <Button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event("abrir-chat"))}
+            className="py-1 text-[12px]"
+          >
             Assistência Técnica
           </Button>
         </div>

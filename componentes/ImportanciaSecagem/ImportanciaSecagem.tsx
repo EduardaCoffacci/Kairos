@@ -3,9 +3,9 @@ export default function ImportanciaSecagem() {
   return (
     <section
       id="importancia"
-      className="relative overflow-hidden bg-[var(--kairos-black)] px-6 py-24 text-white md:py-32"
+      className="relative overflow-hidden bg-[var(--kairos-black)] px-0 py-24 text-white md:py-32"
     >
-      <div className="mx-auto max-w-7xl">
+      <div className="container-kairos">
         {/* CABEÇALHO DIFERENCIADO */}
         <div className="grid gap-8 border-b border-white/10 pb-12 md:grid-cols-[1fr_280px] md:items-end md:pb-16">
           <div>
@@ -34,7 +34,7 @@ export default function ImportanciaSecagem() {
         {/* CONTEÚDO PRINCIPAL */}
         <div className="mt-16 grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-stretch lg:gap-14">
           {/* TEXTO */}
-          <div className="flex flex-col justify-center border-l-2 border-[var(--kairos-orange)] pl-6 md:pl-10">
+          <div className="flex min-w-0 flex-col justify-center border-l-2 border-[var(--kairos-orange)] pl-6 md:pl-10">
             <span className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-500">
               Qualidade em cada etapa
             </span>
@@ -60,8 +60,8 @@ export default function ImportanciaSecagem() {
           </div>
 
           {/* DESTAQUES */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-            <article className="group border border-white/10 bg-[var(--kairos-card)] p-7 transition duration-300 hover:border-[var(--kairos-orange)]/60 md:p-9">
+          <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-1">
+            <article className="group min-w-0 border border-white/10 bg-[var(--kairos-card)] p-7 transition duration-300 hover:border-[var(--kairos-orange)]/60 md:p-9">
               <div className="mb-5 h-1 w-10 bg-[var(--kairos-orange)] transition-all duration-300 group-hover:w-16" />
 
               <h4 className="text-xl font-semibold">
@@ -74,7 +74,7 @@ export default function ImportanciaSecagem() {
               </p>
             </article>
 
-            <article className="group border border-white/10 bg-[var(--kairos-card)] p-7 transition duration-300 hover:border-[var(--kairos-orange)]/60 md:p-9">
+            <article className="group min-w-0 border border-white/10 bg-[var(--kairos-card)] p-7 transition duration-300 hover:border-[var(--kairos-orange)]/60 md:p-9">
               <div className="mb-5 h-1 w-10 bg-[var(--kairos-orange)] transition-all duration-300 group-hover:w-16" />
 
               <h4 className="text-xl font-semibold">
@@ -87,7 +87,7 @@ export default function ImportanciaSecagem() {
               </p>
             </article>
 
-            <article className="group border border-white/10 bg-[var(--kairos-card)] p-7 transition duration-300 hover:border-[var(--kairos-orange)]/60 sm:col-span-2 lg:col-span-1 md:p-9">
+            <article className="group min-w-0 border border-white/10 bg-[var(--kairos-card)] p-7 transition duration-300 hover:border-[var(--kairos-orange)]/60 sm:col-span-2 lg:col-span-1 md:p-9">
               <div className="mb-5 h-1 w-10 bg-[var(--kairos-orange)] transition-all duration-300 group-hover:w-16" />
 
               <h4 className="text-xl font-semibold">

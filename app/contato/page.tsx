@@ -181,7 +181,7 @@ function ContactPage() {
 
       {/* FORMULÁRIO E INFORMAÇÕES */}
       <section className="w-full bg-slate-50 pb-10 pt-10 sm:pb-14 sm:pt-12 lg:pb-16 lg:pt-14">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="container-kairos">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.1fr_1fr]">
             {/* FORMULÁRIO */}
             <div className="rounded-xl bg-white p-5 shadow-sm sm:p-7 lg:p-8">
