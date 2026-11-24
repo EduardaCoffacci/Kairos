@@ -39,7 +39,7 @@ export default function Home() {
           muted
           loop
           playsInline
-          className=" w-full object-cover object-[50%_65%]"
+          className="h-auto w-full object-contain"
         >
           <source src="/17923125-hd_1920_1080_60fps.mp4" type="video/mp4" />
         </video>

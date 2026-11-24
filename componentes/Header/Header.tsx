@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -17,7 +18,7 @@ const navigation = [
   { label: "Contato", href: "/contato" },
 ];
 
-const Header = ({ darkText = false }: HeaderProps) => {
+export default function Header({ darkText = false }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -34,29 +35,21 @@ const Header = ({ darkText = false }: HeaderProps) => {
   const textColor = lightHeader ? "text-black" : "text-white";
   const lineColor = lightHeader ? "after:bg-black" : "after:bg-white";
 
-  const linkClass = `
-    relative transition-colors duration-500
-    after:absolute after:-bottom-2 after:left-0
-    after:h-[3px] after:w-0 after:transition-all
-    after:duration-700 hover:after:w-full
-    ${textColor} ${lineColor}
-  `;
+  const linkClass = `relative transition-colors duration-500 after:absolute after:-bottom-2 after:left-0 after:h-[3px] after:w-0 after:transition-all after:duration-700 hover:after:w-full ${textColor} ${lineColor}`;
+
+  const headerClass = lightHeader
+    ? "border-black/10 bg-white"
+    : "border-white/20 bg-transparent";
 
   const closeMenu = () => setIsMenuOpen(false);
 
   return (
-    <header
-      className={`fixed left-0 top-0 z-50 w-full border-b backdrop-blur-xl transition-all duration-500 ${
-        lightHeader
-          ? "border-black/10 bg-white"
-          : "border-white/20 bg-transparent"
-      }`}
-    >
+    <header className={`fixed left-0 top-0 z-50 w-full border-b backdrop-blur-xl transition-all duration-500 ${headerClass}`}>
       <div className="container-kairos relative flex h-[65px] items-center justify-between sm:h-[70px] lg:h-[80px] xl:h-[90px]">
         <Link
           href="/"
-          className="w-[140px] sm:w-[160px] lg:w-[200px] xl:w-[250px]"
           aria-label="Kairos - Página inicial"
+          className="w-[140px] sm:w-[160px] lg:w-[200px] xl:w-[250px]"
         >
           <Image
             src="/logo.png"
@@ -68,7 +61,6 @@ const Header = ({ darkText = false }: HeaderProps) => {
           />
         </Link>
 
-        {/* Menu desktop */}
         <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center justify-center gap-5 text-[13px] font-semibold lg:flex xl:gap-7">
           {navigation.map(({ label, href }) => (
             <Link key={href} href={href} className={linkClass}>
@@ -77,10 +69,8 @@ const Header = ({ darkText = false }: HeaderProps) => {
           ))}
         </nav>
 
-        {/* Botão desktop */}
         <div className="hidden w-[250px] justify-end py-0.5 text-[13px] lg:flex xl:w-[350px] xl:text-[12px]">
           <Button
-            type="button"
             onClick={() => window.dispatchEvent(new Event("abrir-chat"))}
             className="py-1 text-[12px]"
           >
@@ -88,7 +78,6 @@ const Header = ({ darkText = false }: HeaderProps) => {
           </Button>
         </div>
 
-        {/* Botão mobile */}
         <button
           type="button"
           onClick={() => setIsMenuOpen((prev) => !prev)}
@@ -107,23 +96,16 @@ const Header = ({ darkText = false }: HeaderProps) => {
         </button>
       </div>
 
-      {/* Menu mobile */}
       <nav
         className={`overflow-hidden border-t transition-all duration-500 ease-out lg:hidden ${
-          isScrolled
-            ? "border-black/10 bg-white/95"
-            : "border-white/20 bg-black/90"
+          isScrolled ? "border-black/10 bg-white/95" : "border-white/20 bg-black/90"
         } ${
           isMenuOpen
             ? "max-h-[500px] translate-y-0 px-6 py-8 opacity-100"
             : "max-h-0 -translate-y-4 px-6 py-0 opacity-0"
         }`}
       >
-        <div
-          className={`flex flex-col items-center gap-6 transition-colors duration-500 ${
-            lightHeader ? "text-black" : "text-white"
-          }`}
-        >
+        <div className={`flex flex-col items-center gap-6 transition-colors duration-500 ${textColor}`}>
           {navigation.map(({ label, href }) => (
             <Link key={href} href={href} onClick={closeMenu}>
               {label}
@@ -135,6 +117,4 @@ const Header = ({ darkText = false }: HeaderProps) => {
       </nav>
     </header>
   );
-};
-
-export default Header;
+}
