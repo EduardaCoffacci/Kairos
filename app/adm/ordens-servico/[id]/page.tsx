@@ -470,7 +470,7 @@ export default function DetalhesOrdem() {
         <Button
           startIcon={<ArrowLeft size={18} />}
           onClick={() => {
-            window.location.href = "/adm/ordens-servico";
+            router.push("/adm/ordens-servico");
           }}
           sx={{
             color: "#e04f11",

@@ -1,37 +1,50 @@
-
 "use client";
+import { useChat } from "@/app/context/ChatContext";
 
+// Imports
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import Button from "../Button/Button";
 
+// Propriedades do Header
 interface HeaderProps {
   darkText?: boolean;
 }
 
+// Links do menu
 const navigation = [
   { label: "Home", href: "/" },
-  { label: "Fornalhas", href: "/fornalhas" },
+  { label: "Queimadores", href: "/queimadores" },
   { label: "Produtos", href: "/produtos" },
   { label: "Nossa História", href: "/nossahistoria" },
   { label: "Contato", href: "/contato" },
 ];
 
 export default function Header({ darkText = false }: HeaderProps) {
+  const { setIsChatOpen } = useChat();
+  // Estados do menu e da rolagem
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  console.log("Menu aberto:", isMenuOpen);
 
+  // Verifica se a página foi rolada
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 500);
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 500);
+    };
 
     handleScroll();
+
     window.addEventListener("scroll", handleScroll);
 
+    // Remove o evento quando o componente sair da tela
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Define as cores do Header conforme a rolagem
   const lightHeader = darkText || isScrolled;
+
   const textColor = lightHeader ? "text-black" : "text-white";
   const lineColor = lightHeader ? "after:bg-black" : "after:bg-white";
 
@@ -41,11 +54,15 @@ export default function Header({ darkText = false }: HeaderProps) {
     ? "border-black/10 bg-white"
     : "border-white/20 bg-transparent";
 
+  // Fecha o menu mobile
   const closeMenu = () => setIsMenuOpen(false);
 
   return (
-    <header className={`fixed left-0 top-0 z-50 w-full border-b backdrop-blur-xl transition-all duration-500 ${headerClass}`}>
+    <header
+      className={`fixed left-0 top-0 z-50 w-full border-b backdrop-blur-xl transition-all duration-500 ${headerClass}`}
+    >
       <div className="container-kairos relative flex h-[65px] items-center justify-between sm:h-[70px] lg:h-[80px] xl:h-[90px]">
+        {/* Logo */}
         <Link
           href="/"
           aria-label="Kairos - Página inicial"
@@ -61,6 +78,7 @@ export default function Header({ darkText = false }: HeaderProps) {
           />
         </Link>
 
+        {/* Menu para telas maiores */}
         <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center justify-center gap-5 text-[13px] font-semibold lg:flex xl:gap-7">
           {navigation.map(({ label, href }) => (
             <Link key={href} href={href} className={linkClass}>
@@ -69,15 +87,17 @@ export default function Header({ darkText = false }: HeaderProps) {
           ))}
         </nav>
 
+        {/* Botão de assistência para desktop */}
         <div className="hidden w-[250px] justify-end py-0.5 text-[13px] lg:flex xl:w-[350px] xl:text-[12px]">
           <Button
-            onClick={() => window.dispatchEvent(new Event("abrir-chat"))}
+            onClick={() => setIsChatOpen(true)}
             className="py-1 text-[12px]"
           >
             Assistência Técnica
           </Button>
         </div>
 
+        {/* Botão para abrir e fechar o menu mobile */}
         <button
           type="button"
           onClick={() => setIsMenuOpen((prev) => !prev)}
@@ -96,16 +116,21 @@ export default function Header({ darkText = false }: HeaderProps) {
         </button>
       </div>
 
+      {/* Menu mobile */}
       <nav
         className={`overflow-hidden border-t transition-all duration-500 ease-out lg:hidden ${
-          isScrolled ? "border-black/10 bg-white/95" : "border-white/20 bg-black/90"
+          isScrolled
+            ? "border-black/10 bg-white/95"
+            : "border-white/20 bg-black/90"
         } ${
           isMenuOpen
             ? "max-h-[500px] translate-y-0 px-6 py-8 opacity-100"
             : "max-h-0 -translate-y-4 px-6 py-0 opacity-0"
         }`}
       >
-        <div className={`flex flex-col items-center gap-6 transition-colors duration-500 ${textColor}`}>
+        <div
+          className={`flex flex-col items-center gap-6 transition-colors duration-500 ${textColor}`}
+        >
           {navigation.map(({ label, href }) => (
             <Link key={href} href={href} onClick={closeMenu}>
               {label}

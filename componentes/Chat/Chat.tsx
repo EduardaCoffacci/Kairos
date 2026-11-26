@@ -1,5 +1,5 @@
-
 "use client";
+import { useChat } from "@/app/context/ChatContext";
 
 import {
   createChatConversation,
@@ -20,7 +20,7 @@ import type {
 } from "./chat.types";
 
 export default function AtendenteWhatsApp() {
-  const [chatOpen, setChatOpen] = useState(false);
+  const { isChatOpen, setIsChatOpen } = useChat();
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
@@ -35,15 +35,6 @@ export default function AtendenteWhatsApp() {
   const socketRef = useRef<Socket | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
-  // Permite abrir o chat pelos botões do site.
-  useEffect(() => {
-  const abrirChat = () => setChatOpen(true);
-
-  window.addEventListener("abrir-chat", abrirChat);
-  return () => window.removeEventListener("abrir-chat", abrirChat);
-}, []);
-
-
   // Evita mensagens duplicadas.
   const addMessage = useCallback((incoming: Message) => {
     setMessages((current) => {
@@ -57,83 +48,85 @@ export default function AtendenteWhatsApp() {
 
   // Recupera uma conversa existente, se houver.
   useEffect(() => {
-  let cancelled = false;
+    let cancelled = false;
 
-  async function initializeChat() {
-    setLoading(true);
-    setError("");
-    setClosedNotice("");
+    async function initializeChat() {
+      setLoading(true);
+      setError("");
+      setClosedNotice("");
 
-    try {
-      const visitorId =
-        localStorage.getItem(CHAT_CONFIG.visitorStorageKey) ||
-        `visitante-${crypto.randomUUID()}`;
+      try {
+        const visitorId =
+          localStorage.getItem(CHAT_CONFIG.visitorStorageKey) ||
+          `visitante-${crypto.randomUUID()}`;
 
-      localStorage.setItem(CHAT_CONFIG.visitorStorageKey, visitorId);
+        localStorage.setItem(CHAT_CONFIG.visitorStorageKey, visitorId);
 
-      const conversationId = localStorage.getItem(
-        CHAT_CONFIG.conversationStorageKey,
-      );
-      const visitorToken = localStorage.getItem(
-        CHAT_CONFIG.visitorTokenStorageKey,
-      );
+        const conversationId = localStorage.getItem(
+          CHAT_CONFIG.conversationStorageKey,
+        );
+        const visitorToken = localStorage.getItem(
+          CHAT_CONFIG.visitorTokenStorageKey,
+        );
 
-      let activeConversation: Conversation | null = null;
+        let activeConversation: Conversation | null = null;
 
-      if (conversationId && visitorToken) {
-        try {
-          const saved = await fetchVisitorConversation(
-            conversationId,
-            visitorToken,
-          );
+        if (conversationId && visitorToken) {
+          try {
+            const saved = await fetchVisitorConversation(
+              conversationId,
+              visitorToken,
+            );
 
-          if (
-            saved._id === conversationId &&
-            saved.visitorId === visitorId &&
-            saved.status === "open"
-          ) {
-            activeConversation = saved;
+            if (
+              saved._id === conversationId &&
+              saved.visitorId === visitorId &&
+              saved.status === "open"
+            ) {
+              activeConversation = saved;
+            }
+          } catch (err) {
+            console.warn("Falha ao recuperar a conversa:", err);
           }
-        } catch (err) {
-          console.warn("Falha ao recuperar a conversa:", err);
         }
+
+        if (cancelled) return;
+
+        if (!activeConversation || !visitorToken) {
+          localStorage.removeItem(CHAT_CONFIG.conversationStorageKey);
+          localStorage.removeItem(CHAT_CONFIG.visitorTokenStorageKey);
+          setConversation(null);
+          setMessages([]);
+          return;
+        }
+
+        setConversation(activeConversation);
+
+        const history = await fetchConversationMessages(
+          activeConversation._id,
+          visitorToken,
+        );
+
+        if (!cancelled) setMessages(history);
+      } catch (err) {
+        console.error("Erro ao iniciar chat:", err);
+
+        if (!cancelled) {
+          setError(
+            "Não foi possível conectar ao atendimento. Tente novamente.",
+          );
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-
-      if (cancelled) return;
-
-      if (!activeConversation || !visitorToken) {
-        localStorage.removeItem(CHAT_CONFIG.conversationStorageKey);
-        localStorage.removeItem(CHAT_CONFIG.visitorTokenStorageKey);
-        setConversation(null);
-        setMessages([]);
-        return;
-      }
-
-      setConversation(activeConversation);
-
-      const history = await fetchConversationMessages(
-        activeConversation._id,
-        visitorToken,
-      );
-
-      if (!cancelled) setMessages(history);
-    } catch (err) {
-      console.error("Erro ao iniciar chat:", err);
-
-      if (!cancelled) {
-        setError("Não foi possível conectar ao atendimento. Tente novamente.");
-      }
-    } finally {
-      if (!cancelled) setLoading(false);
     }
-  }
 
-  void initializeChat();
+    void initializeChat();
 
-  return () => {
-    cancelled = true;
-  };
-}, []);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Cria a conversa depois que o visitante informa o nome.
   async function startConversation(event: React.FormEvent<HTMLFormElement>) {
@@ -330,7 +323,7 @@ export default function AtendenteWhatsApp() {
     bottomRef.current?.scrollIntoView({
       behavior: "smooth",
     });
-  }, [messages, chatOpen, closedNotice]);
+  }, [messages, isChatOpen, closedNotice]);
 
   // Envia mensagens pelo Socket.IO.
   function sendMessage(event: React.FormEvent<HTMLFormElement>) {
@@ -426,9 +419,8 @@ export default function AtendenteWhatsApp() {
   return (
     <div className="fixed bottom-5 right-5 z-50 font-sans sm:bottom-6 sm:right-6">
       {/* Janela do atendimento */}
-      {chatOpen && (
+      {isChatOpen && (
         <div className="absolute bottom-[82px] right-0 flex h-[min(620px,calc(100dvh-120px))] w-[370px] max-w-[calc(100vw-24px)] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl sm:w-[390px]">
-
           {/* Cabeçalho */}
           <header className="flex shrink-0 items-center gap-3 bg-[var(--kairos-orange)] px-5 py-4 text-white">
             <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-white/80">
@@ -473,7 +465,7 @@ export default function AtendenteWhatsApp() {
 
             <button
               type="button"
-              onClick={() => setChatOpen(false)}
+              onClick={() => setIsChatOpen(false)}
               aria-label="Fechar atendimento"
               className="flex h-9 w-9 items-center justify-center rounded-full text-2xl text-white/90 transition hover:bg-white/15 hover:text-white"
             >
@@ -570,7 +562,6 @@ export default function AtendenteWhatsApp() {
             <>
               {/* Área das mensagens */}
               <div className="flex flex-1 flex-col gap-4 overflow-y-auto bg-[#F5F6F8] p-4">
-
                 {/* Mensagem de boas-vindas */}
                 <div className="flex justify-start">
                   <div className="max-w-[90%] rounded-2xl rounded-tl-sm border border-gray-100 bg-white p-3.5 shadow-sm">
@@ -770,9 +761,9 @@ export default function AtendenteWhatsApp() {
       {/* Botão flutuante */}
       <button
         type="button"
-        onClick={() => setChatOpen((open) => !open)}
-        aria-label={chatOpen ? "Fechar atendimento" : "Abrir atendimento"}
-        aria-expanded={chatOpen}
+        onClick={() => setIsChatOpen(!isChatOpen)}
+        aria-label={isChatOpen ? "Fechar atendimento" : "Abrir atendimento"}
+        aria-expanded={isChatOpen}
         className="relative ml-auto flex h-[62px] w-[62px] items-center justify-center rounded-full transition-transform duration-300 hover:scale-105 sm:h-[68px] sm:w-[68px]"
       >
         <div className="relative h-full w-full overflow-hidden rounded-full border-4 border-white bg-[var(--kairos-orange)] shadow-xl">
