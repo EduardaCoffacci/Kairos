@@ -7,25 +7,40 @@ O projeto envolve desenvolvimento frontend e backend, integração com API, pers
 ## Tecnologias utilizadas
 
 **Frontend**
+
 - Next.js
 - React
 - TypeScript
 - Tailwind CSS
+- Material UI (MUI)
+- Emotion
 - React Hook Form
 - Zod
-- Socket.IO Client
 - Lucide React
+- React Icons
+- Motion
 
 **Backend**
+
 - Node.js
 - NestJS
 - TypeScript
+- PostgreSQL
+- TypeORM
 - MongoDB
 - Mongoose
-- Socket.IO
 - JWT
+- Socket.IO
+- Swagger
+- Class Validator
+- Class Transformer
+- Helmet
+- Cookie Parser
+- Throttler
+- Resend
 
 **Ferramentas e conceitos**
+
 - Git e GitHub
 - API REST
 - WebSockets
@@ -53,7 +68,8 @@ A aplicação utiliza uma arquitetura separada entre frontend e backend, permiti
 
 - **Frontend:** Next.js, React e TypeScript
 - **Backend:** NestJS e Node.js
-- **Banco de dados:** MongoDB
+- **Banco de dados relacional:** PostgreSQL com TypeORM
+- **Banco de dados NoSQL:** MongoDB com Mongoose
 - **Comunicação em tempo real:** Socket.IO
 
 ## Objetivo do projeto
