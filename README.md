@@ -11,10 +11,6 @@ O projeto envolve desenvolvimento frontend e backend, integração com API, pers
 - React
 - TypeScript
 - Tailwind CSS
-- React Hook Form
-- Zod
-- Socket.IO Client
-- Lucide React
 
 **Backend**
 - Node.js
@@ -22,8 +18,8 @@ O projeto envolve desenvolvimento frontend e backend, integração com API, pers
 - TypeScript
 - MongoDB
 - Mongoose
-- Socket.IO
-- JWT
+- PostgreSQL
+- TypeORM
 
 **Ferramentas e conceitos**
 - Git e GitHub
@@ -53,7 +49,8 @@ A aplicação utiliza uma arquitetura separada entre frontend e backend, permiti
 
 - **Frontend:** Next.js, React e TypeScript
 - **Backend:** NestJS e Node.js
-- **Banco de dados:** MongoDB
+- **Banco de dados relacional:** PostgreSQL com TypeORM
+- **Banco de dados NoSQL:** MongoDB com Mongoose
 - **Comunicação em tempo real:** Socket.IO
 
 ## Objetivo do projeto
