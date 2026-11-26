@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { Box } from "@mui/material";
-import Sidebar from "@/componentes/adm/SidebarTemp";
+import Sidebar from "@/components/adm/SidebarTemp";
 
 export default function AdminLayout({
   children,
@@ -15,7 +15,7 @@ export default function AdminLayout({
   if (pathname === "/adm/chat" || pathname === "/adm/login") {
     return <>{children}</>;
   }
-  
+
   const largura = sidebarAberto ? 260 : 76;
 
   return (

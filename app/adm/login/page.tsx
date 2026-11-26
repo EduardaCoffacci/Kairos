@@ -4,14 +4,12 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 
-import LoginLoading from "@/componentes/adm/login/LoginLoading";
-import LoginForm from "@/componentes/adm/login/LoginForm";
+import LoginLoading from "@/components/adm/login/LoginLoading";
+import LoginForm from "@/components/adm/login/LoginForm";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ||
-  (process.env.NODE_ENV === "development"
-    ? "http://localhost:3001"
-    : "");
+  (process.env.NODE_ENV === "development" ? "http://localhost:3001" : "");
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -71,9 +69,7 @@ export default function AdminLoginPage() {
 
       router.replace("/adm/chat");
     } catch {
-      setError(
-        "Não foi possível conectar ao servidor. Tente novamente.",
-      );
+      setError("Não foi possível conectar ao servidor. Tente novamente.");
     } finally {
       setLoginLoading(false);
     }
@@ -122,8 +118,7 @@ export default function AdminLoginPage() {
             </div>
 
             <h1 className="text-3xl font-bold tracking-tight">
-              Kairos{" "}
-              <span className="text-[#e04f11]">Atendimento</span>
+              Kairos <span className="text-[#e04f11]">Atendimento</span>
             </h1>
 
             <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-zinc-400">
@@ -140,9 +135,7 @@ export default function AdminLoginPage() {
             error={error}
             onUsernameChange={setUsername}
             onPasswordChange={setPassword}
-            onTogglePassword={() =>
-              setShowPassword((previous) => !previous)
-            }
+            onTogglePassword={() => setShowPassword((previous) => !previous)}
             onSubmit={handleLogin}
           />
 

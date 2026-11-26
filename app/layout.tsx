@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import AtendenteWhatsApp from "@/componentes/Chat/Chat";
+import AtendenteWhatsApp from "@/components/chat/Chat";
 import { ChatProvider } from "./context/ChatContext";
 import "./globals.css";
 

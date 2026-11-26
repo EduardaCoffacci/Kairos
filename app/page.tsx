@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import Hero from "@/componentes/Hero/Hero";
-import Header from "../componentes/Header/Header";
-import ImportanciaSecagem from "@/componentes/ImportanciaSecagem/ImportanciaSecagem";
-import DesafiosSecagem from "@/componentes/DesafiosSecagem/DesafiosSecagem";
-import QueimadoresCavacos from "@/componentes/QueimadoresCavacos/QueimadoresCavacos";
-import Footer from "@/componentes/Footer/Footer";
+import Hero from "@/components/hero/Hero";
+import Header from "../components/header/Header";
+import DryingImportance from "@/components/drying-importance/DryingImportance";
+import DryingChallenges from "@/components/drying-challenges/DryingChallenges";
+import ChipBurners from "@/components/chip-burners/ChipBurners";
+import Footer from "@/components/footer/Footer";
 
 export default function Home() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -16,17 +16,28 @@ export default function Home() {
 
     if (!video) return;
 
-    const interval = setInterval(() => {
-      // 50% mais lento
+    let timeout: ReturnType<typeof setTimeout>;
+
+    const alternarVelocidade = () => {
+      // Bem lento
       video.playbackRate = 0.2;
 
-      setTimeout(() => {
-        // 50% mais rápido
+      timeout = setTimeout(() => {
+        // Velocidade normal
         video.playbackRate = 1;
-      }, 3000);
-    }, 6000);
 
-    return () => clearInterval(interval);
+        timeout = setTimeout(() => {
+          // Bem rápido
+          video.playbackRate = 2;
+
+          timeout = setTimeout(alternarVelocidade, 2000);
+        }, 2000);
+      }, 5000);
+    };
+
+    alternarVelocidade();
+
+    return () => clearTimeout(timeout);
   }, []);
 
   return (
@@ -45,15 +56,15 @@ export default function Home() {
         </video>
 
         {/* Camada escura */}
-        <div className="absolute inset-0 bg-black/60"></div>
+        <div className="absolute inset-0 bg-black/70"></div>
       </div>
 
       <div className="relative z-10">
         <Header />
         <Hero />
-        <ImportanciaSecagem />
-        <DesafiosSecagem />
-        <QueimadoresCavacos />
+        <DryingImportance />
+        <DryingChallenges />
+        <ChipBurners />
 
         <Footer />
       </div>
