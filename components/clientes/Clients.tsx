@@ -30,6 +30,10 @@ interface Cliente {
   cnpj: string;
   telefone: string;
   email: string | null;
+  cidade: string;
+  estado: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -53,8 +57,8 @@ export default function Clientes() {
   );
   const [snackbarAberto, setSnackbarAberto] = useState(false);
 
-  // Exibe uma notificação na tela.
-  function mostrarMensagem(texto: string, tipo: "success" | "error") {
+  // Centraliza a exibição de notificações de sucesso e erro.
+  function showNotification(texto: string, tipo: "success" | "error") {
     setMensagem(texto);
     setTipoMensagem(tipo);
     setSnackbarAberto(true);
@@ -62,6 +66,9 @@ export default function Clientes() {
 
   // Busca todos os clientes ou pesquisa pelo termo informado.
   const buscarClientes = useCallback(async (termo = "") => {
+    setCarregando(true);
+    setErro("");
+
     try {
       const rota = termo
         ? `/clients/search?searchTerm=${encodeURIComponent(termo)}`
@@ -70,28 +77,30 @@ export default function Clientes() {
       const resposta = await fetch(`${API_URL}${rota}`);
 
       if (!resposta.ok) {
-        throw new Error();
+        throw new Error("Não foi possível carregar os clientes.");
       }
 
-      const dados = await resposta.json();
+      const dados: Cliente[] = await resposta.json();
 
       setClientes(dados);
-      setErro("");
-    } catch {
-      setErro("Não foi possível carregar os clientes.");
+    } catch (error) {
+      const mensagem =
+        error instanceof Error ? error.message : "Ocorreu um erro inesperado.";
+
+      setErro(mensagem);
     } finally {
       setCarregando(false);
     }
   }, []);
 
-  // Exclui o cliente selecionado.
-  async function excluirCliente() {
-    if (!clienteExcluindo) return;
+  // Exclui um cliente e atualiza a listagem após a confirmação da API.
+  async function deleteClient() {
+    if (!clienteExcluindo || excluindo) return;
+
+    setExcluindo(true);
+    setErro("");
 
     try {
-      setExcluindo(true);
-      setErro("");
-
       const resposta = await fetch(
         `${API_URL}/clients/${clienteExcluindo.id}`,
         {
@@ -105,14 +114,14 @@ export default function Clientes() {
 
       setClienteExcluindo(null);
 
-      mostrarMensagem("Cliente excluído com sucesso.", "success");
-
       await buscarClientes(busca.trim());
+
+      showNotification("Cliente excluído com sucesso.", "success");
     } catch (error) {
       const mensagemErro =
         error instanceof Error ? error.message : "Erro ao excluir cliente.";
 
-      mostrarMensagem(mensagemErro, "error");
+      showNotification(mensagemErro, "error");
     } finally {
       setExcluindo(false);
     }
@@ -152,6 +161,33 @@ export default function Clientes() {
       flex: 1.2,
       minWidth: 180,
       valueGetter: (value) => value || "—",
+    },
+    {
+      field: "cidade",
+      headerName: "Cidade",
+      flex: 1,
+      minWidth: 140,
+    },
+    {
+      field: "estado",
+      headerName: "Estado",
+      width: 90,
+    },
+    {
+      field: "createdAt",
+      headerName: "Data de cadastro",
+      flex: 1,
+      minWidth: 160,
+      valueFormatter: (value) =>
+        value ? new Date(value).toLocaleDateString("pt-BR") : "—",
+    },
+    {
+      field: "updatedAt",
+      headerName: "Última atualização",
+      flex: 1,
+      minWidth: 170,
+      valueFormatter: (value) =>
+        value ? new Date(value).toLocaleDateString("pt-BR") : "—",
     },
     {
       field: "acoes",
@@ -198,8 +234,15 @@ export default function Clientes() {
   ];
 
   return (
-    <Box className="min-h-screen bg-slate-50 p-6">
-      <Box className="mx-auto max-w-7xl">
+    <Box
+      className="min-h-screen bg-slate-50 p-6"
+      sx={{
+        width: "100%",
+        minWidth: 0,
+        overflowX: "hidden",
+      }}
+    >
+      <Box className="mx-auto max-w-7xl" sx={{ minWidth: 0 }}>
         {/* Cabeçalho */}
         <Box className="mb-7 flex flex-wrap items-center justify-between gap-4">
           <Box>
@@ -245,6 +288,8 @@ export default function Clientes() {
         <Paper
           elevation={0}
           sx={{
+            width: "100%",
+            minWidth: 0,
             border: "1px solid #e2e8f0",
             borderRadius: "12px",
             overflow: "hidden",
@@ -290,53 +335,84 @@ export default function Clientes() {
             </Box>
           )}
 
-          {/* DataGrid */}
-          <DataGrid
-            rows={clientes}
-            columns={columns}
-            loading={carregando}
-            getRowId={(row) => row.id}
-            autoHeight
-            disableRowSelectionOnClick
-            pageSizeOptions={[5, 10, 25]}
-            initialState={{
-              pagination: {
-                paginationModel: {
-                  page: 0,
-                  pageSize: 5,
-                },
-              },
-            }}
+          {/* Rolagem horizontal */}
+          <Box
             sx={{
-              border: 0,
+              width: "100%",
+              minWidth: 0,
+              overflowX: "auto",
+              overflowY: "hidden",
+              scrollbarWidth: "thin",
+              scrollbarColor: "#cbd5e1 transparent",
 
-              "& .MuiDataGrid-columnHeaders": {
-                backgroundColor: "#f8fafc",
-                borderBottom: "1px solid #e2e8f0",
+              "&::-webkit-scrollbar": {
+                height: "8px",
               },
 
-              "& .MuiDataGrid-columnHeaderTitle": {
-                color: "#64748b",
-                fontWeight: 700,
-                fontSize: "0.75rem",
-                textTransform: "uppercase",
-                letterSpacing: "0.04em",
-              },
-
-              "& .MuiDataGrid-cell": {
-                color: "#64748b",
-                borderBottom: "1px solid #f1f5f9",
-              },
-
-              "& .MuiDataGrid-row:hover": {
+              "&::-webkit-scrollbar-track": {
                 backgroundColor: "#f8fafc",
               },
 
-              "& .MuiDataGrid-footerContainer": {
-                borderTop: "1px solid #e2e8f0",
+              "&::-webkit-scrollbar-thumb": {
+                backgroundColor: "#cbd5e1",
+                borderRadius: "10px",
+              },
+
+              "&::-webkit-scrollbar-thumb:hover": {
+                backgroundColor: "#e04f11",
               },
             }}
-          />
+          >
+            <Box sx={{ width: "1500px" }}>
+              <DataGrid
+                rows={clientes}
+                columns={columns}
+                loading={carregando}
+                getRowId={(row) => row.id}
+                autoHeight
+                disableRowSelectionOnClick
+                pageSizeOptions={[5, 10, 25]}
+                initialState={{
+                  pagination: {
+                    paginationModel: {
+                      page: 0,
+                      pageSize: 5,
+                    },
+                  },
+                }}
+                sx={{
+                  width: "100%",
+                  border: 0,
+
+                  "& .MuiDataGrid-columnHeaders": {
+                    backgroundColor: "#f8fafc",
+                    borderBottom: "1px solid #e2e8f0",
+                  },
+
+                  "& .MuiDataGrid-columnHeaderTitle": {
+                    color: "#64748b",
+                    fontWeight: 700,
+                    fontSize: "0.75rem",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                  },
+
+                  "& .MuiDataGrid-cell": {
+                    color: "#64748b",
+                    borderBottom: "1px solid #f1f5f9",
+                  },
+
+                  "& .MuiDataGrid-row:hover": {
+                    backgroundColor: "#f8fafc",
+                  },
+
+                  "& .MuiDataGrid-footerContainer": {
+                    borderTop: "1px solid #e2e8f0",
+                  },
+                }}
+              />
+            </Box>
+          </Box>
         </Paper>
       </Box>
 
@@ -346,7 +422,7 @@ export default function Clientes() {
         onFechar={() => setModalAberto(false)}
         onSalvo={async () => {
           await buscarClientes(busca.trim());
-          mostrarMensagem("Cliente cadastrado com sucesso.", "success");
+          showNotification("Cliente cadastrado com sucesso.", "success");
         }}
       />
 
@@ -357,9 +433,10 @@ export default function Clientes() {
         onFechar={() => setClienteEditando(null)}
         onSalvo={async () => {
           await buscarClientes(busca.trim());
-          mostrarMensagem("Cliente atualizado com sucesso.", "success");
+          showNotification("Cliente atualizado com sucesso.", "success");
         }}
       />
+
       {/* Confirmação de exclusão */}
       <Dialog
         open={clienteExcluindo !== null}
@@ -419,7 +496,7 @@ export default function Clientes() {
           </Button>
 
           <Button
-            onClick={excluirCliente}
+            onClick={deleteClient}
             disabled={excluindo}
             variant="contained"
             color="error"
