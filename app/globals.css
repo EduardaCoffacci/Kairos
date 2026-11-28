@@ -1,10 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  --kairos-black: #050505;
-  --kairos-dark: #0a0a0a;
-  --kairos-card: #0d0d0d;
-  --kairos-orange: #e04f11;
+  /* Fundos */
+  --kairos-black: #08090b;
+  --kairos-dark: #101216;
+  --kairos-card: #191d23;
+
+  /* Identidade visual */
+  --kairos-orange: #e85b24;
+
+  /* Textos */
+  --kairos-text: #ffffff;
+  --kairos-text-secondary: #c4c7cc;
+
+  /* Bordas */
+  --kairos-border: rgba(255, 255, 255, 0.1);
 }
 
 body {

@@ -43,7 +43,7 @@ export default function DryingImportance() {
           </div>
 
           <div className="md:border-l md:border-white/20 md:pb-2 md:pl-6">
-            <p className="text-base leading-7 text-gray-400">
+            <p className="text-base leading-7 text-gray-300">
               Mais do que retirar a umidade, é uma etapa essencial para
               preservar a qualidade e a conservação dos grãos.
             </p>
@@ -58,7 +58,7 @@ export default function DryingImportance() {
         {/* Conteúdo */}
         <div className="mt-16 grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:gap-14">
           <div className="flex min-w-0 flex-col justify-center border-l-2 border-[var(--kairos-orange)] pl-6 md:pl-10">
-            <span className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-500">
+            <span className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-300">
               Qualidade em cada etapa
             </span>
 
@@ -73,7 +73,7 @@ export default function DryingImportance() {
               condições necessárias para o armazenamento.
             </p>
 
-            <p className="mt-5 text-base leading-8 text-gray-400 md:text-lg">
+            <p className="mt-5 text-base leading-8 text-gray-300 md:text-lg">
               Processos inadequados podem provocar perdas de qualidade, reduzir
               o valor comercial da produção e comprometer sua conservação. Por
               isso, contar com equipamentos e sistemas de secagem adequados é
@@ -87,18 +87,18 @@ export default function DryingImportance() {
             {highlights.map(({ title, description }, index) => (
               <article
                 key={title}
-                className={`group min-w-0 border border-white/10 bg-[var(--kairos-card)] p-7 transition duration-300 hover:border-[var(--kairos-orange)]/60 md:p-9 ${
+                className={`group min-w-0 border border-white/10 bg-[var(--kairos-card)] p-7 motion-safe:transition-all motion-safe:duration-300 motion-safe:hover:-translate-y-1 motion-safe:hover:border-[var(--kairos-orange)]/60 motion-reduce:transition-none md:p-9 ${
                   index === 2 ? "sm:col-span-2 lg:col-span-1" : ""
                 }`}
               >
                 <div
                   aria-hidden="true"
-                  className="mb-5 h-1 w-10 bg-[var(--kairos-orange)] transition-all duration-300 group-hover:w-16"
+                  className="mb-5 h-1 w-10 bg-[var(--kairos-orange)] motion-safe:transition-all motion-safe:duration-300 motion-safe:group-hover:w-16 motion-reduce:transition-none"
                 />
 
                 <h4 className="text-xl font-semibold">{title}</h4>
 
-                <p className="mt-3 text-sm leading-7 text-gray-400 md:text-base">
+                <p className="mt-3 text-sm leading-7 text-gray-300 md:text-base">
                   {description}
                 </p>
               </article>

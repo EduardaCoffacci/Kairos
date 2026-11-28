@@ -15,6 +15,7 @@ import {
 
 import Header from "@/components/header/Header";
 import Footer from "@/components/footer/Footer";
+import Button from "@/components/button/Button";
 
 const servicos = [
   {
@@ -92,9 +93,9 @@ const etapas = [
 export default function ConsultoriaPage() {
   return (
     <>
-      <Header />
+      <Header darkText />
 
-      <main className="bg-white text-[#222222]">
+      <main className="bg-white text-[#222222] pt-20">
         {/* APRESENTAÇÃO */}
         <section className="border-b border-gray-200">
           <div className="container-kairos py-20 md:py-24">
@@ -115,20 +116,14 @@ export default function ConsultoriaPage() {
               </p>
 
               <div className="mt-9 flex flex-wrap gap-4">
-                <Link
-                  href="/contato"
-                  className="inline-flex items-center gap-3 rounded bg-[var(--kairos-orange)] px-6 py-4 text-sm font-semibold text-white transition hover:opacity-90"
-                >
+                <Button href="/contato">
                   Solicitar avaliação
                   <ArrowRight size={18} />
-                </Link>
+                </Button>
 
-                <a
-                  href="#como-funciona"
-                  className="inline-flex items-center border border-gray-300 px-6 py-4 text-sm font-semibold text-gray-800 transition hover:border-[var(--kairos-orange)] hover:text-[var(--kairos-orange)]"
-                >
+                <Button href="#como-funciona" variant="secondary">
                   Conhecer o processo
-                </a>
+                </Button>
               </div>
             </div>
           </div>
@@ -389,13 +384,10 @@ export default function ConsultoriaPage() {
               poderá conversar com você sobre a necessidade da sua indústria.
             </p>
 
-            <Link
-              href="/contato"
-              className="mt-8 inline-flex items-center gap-3 rounded bg-[var(--kairos-orange)] px-7 py-4 text-sm font-semibold text-white transition hover:opacity-90"
-            >
-              Solicitar atendimento
-              <ArrowRight size={18} />
-            </Link>
+            <Button href="/contact" className="mt-8">
+  Solicitar atendimento
+  <ArrowRight size={18} />
+</Button>
           </div>
         </section>
       </main>

@@ -19,6 +19,7 @@ const navigation = [
   { label: "Home", href: "/" },
   { label: "Queimadores", href: "/burners" },
   { label: "Produtos", href: "/products" },
+  { label: "Consultoria", href: "/consulting" },
   { label: "Nossa História", href: "/our-story" },
   { label: "Contato", href: "/contact" },
 ];

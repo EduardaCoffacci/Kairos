@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Header from "@/components/header/Header";
 import Footer from "@/components/footer/Footer";
+import Button from "@/components/button/Button";
+import { ArrowRight } from "lucide-react";
 
 const applications = [
   {
@@ -80,7 +82,7 @@ export default function FornalhasPage() {
               </span>
 
               <h1 className="text-4xl font-bold leading-tight md:text-5xl">
-                FORNALHAS
+                QUEIMADORES
                 <span className="block text-[var(--kairos-orange)]">
                   INDUSTRIAIS
                 </span>
@@ -92,19 +94,14 @@ export default function FornalhasPage() {
               </p>
 
               <div className="mt-10 flex flex-wrap gap-4">
-                <a
-                  href="/contato"
-                  className="rounded-md bg-[var(--kairos-orange)] px-7 py-4 font-semibold transition hover:bg-[#f15f20]"
-                >
+                <Button href="/contact" variant="primary">
                   Solicitar orçamento
-                </a>
+                  <ArrowRight size={18} />
+                </Button>
 
-                <a
-                  href="#solucoes"
-                  className="rounded-md border border-white/30 px-7 py-4 font-semibold transition hover:border-[var(--kairos-orange)] hover:text-[var(--kairos-orange)]"
-                >
+                <Button href="/products" variant="secondary">
                   Conheça nossas soluções
-                </a>
+                </Button>
               </div>
             </div>
           </div>
@@ -119,7 +116,7 @@ export default function FornalhasPage() {
               </span>
 
               <h2 className="mt-4 text-4xl font-bold leading-tight md:text-5xl">
-                Fornalhas desenvolvidas para
+                Queimadores desenvolvidas para
                 <span className="text-[var(--kairos-orange)]">
                   {" "}
                   sua operação
@@ -322,12 +319,10 @@ export default function FornalhasPage() {
                 encontrar uma solução adequada para o seu processo industrial.
               </p>
 
-              <a
-                href="/contato"
-                className="mt-9 inline-block rounded-md bg-[var(--kairos-orange)] px-8 py-4 font-semibold transition hover:bg-[#f15f20]"
-              >
+              <Button href="/contact" variant="primary" className="mt-9">
                 Solicitar orçamento
-              </a>
+                <ArrowRight size={18} />
+              </Button>
             </div>
           </div>
         </section>
