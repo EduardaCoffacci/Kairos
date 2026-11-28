@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 import {
   FaLinkedin,
@@ -14,9 +13,9 @@ export default function Footer() {
   return (
     <footer className="relative bg-[#000000] text-white">
       <div className="container-kairos py-12">
-        {/* COLUNAS PRINCIPAIS */}
+        {/* MAIN COLUMNS */}
         <div className="mx-auto grid w-full max-w-[1200px] grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4 lg:gap-12">
-          {/* EMPRESA */}
+          {/* COMPANY */}
           <div>
             <h2 className="text-[20px] font-bold sm:text-[24px]">
               Kairos Termo Engenharia
@@ -26,7 +25,7 @@ export default function Footer() {
               Soluções em energia sustentável para o agronegócio brasileiro.
             </p>
 
-            {/* REDES SOCIAIS */}
+            {/* SOCIAL MEDIA */}
             <div className="mt-6 flex gap-4">
               <a
                 href="https://www.linkedin.com/company/kairosindustrial/posts/?viewAsMember=true"
@@ -40,7 +39,7 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* LINKS RÁPIDOS */}
+          {/* QUICK LINKS */}
           <div>
             <h3 className="text-[17px] font-bold sm:text-[18px]">
               Links Rápidos
@@ -54,68 +53,61 @@ export default function Footer() {
                 Home
               </Link>
 
-              <Link href="/queimadores" className={linkClass}>
+              <Link href="/burners" className={linkClass}>
                 Queimadores
               </Link>
 
-              <Link href="/produtos" className={linkClass}>
+              <Link href="/products" className={linkClass}>
                 Produtos
               </Link>
 
-              <Link href="/nossahistoria" className={linkClass}>
+              <Link href="/our-story" className={linkClass}>
                 Nossa História
               </Link>
 
-              <Link href="/contato" className={linkClass}>
+              <Link href="/contact" className={linkClass}>
                 Contato
               </Link>
             </nav>
           </div>
 
-          {/* PRODUTOS */}
+          {/* PRODUCTS */}
           <div>
-            <h3 className="text-[17px] font-bold sm:text-[18px]">
-              Produtos
-            </h3>
+            <h3 className="text-[17px] font-bold sm:text-[18px]">Produtos</h3>
 
-            <nav
-              aria-label="Produtos"
-              className="mt-5 flex flex-col gap-4"
-            >
-              <Link href="/produtos#moega" className={linkClass}>
+            <nav aria-label="Produtos" className="mt-5 flex flex-col gap-4">
+              <Link href="/products" className={linkClass}>
                 KTMR - Moega de Recepção
               </Link>
 
-              <Link href="/produtos" className={linkClass}>
+              <Link href="/products" className={linkClass}>
                 KTTC - Transportadora de Correia
               </Link>
 
-              <Link href="/produtos" className={linkClass}>
+              <Link href="/products" className={linkClass}>
                 KTPD - Peneira de Disco
               </Link>
 
-              <Link href="/produtos" className={linkClass}>
+              <Link href="/products" className={linkClass}>
                 KTRD - Rosca Dosadora
               </Link>
 
-              <Link href="/produtos" className={linkClass}>
+              <Link href="/products" className={linkClass}>
                 KTSP - Silo Pulmão
               </Link>
 
-              <Link href="/produtos" className={linkClass}>
+              <Link href="/products" className={linkClass}>
                 KTQB - Queimador de Biomassa
               </Link>
             </nav>
           </div>
 
-          {/* CONTATO */}
+          {/* CONTACT */}
           <div>
-            <h3 className="text-[17px] font-bold sm:text-[18px]">
-              Contato
-            </h3>
+            <h3 className="text-[17px] font-bold sm:text-[18px]">Contato</h3>
 
             <address className="mt-5 space-y-4 not-italic">
-              {/* LOCALIZAÇÃO */}
+              {/* LOCATION */}
               <div className="flex gap-3">
                 <FaMapMarkerAlt
                   aria-hidden="true"
@@ -128,7 +120,7 @@ export default function Footer() {
                 </p>
               </div>
 
-              {/* TELEFONE */}
+              {/* PHONE */}
               <div className="flex gap-3">
                 <FaPhone
                   aria-hidden="true"
@@ -144,7 +136,7 @@ export default function Footer() {
                 </a>
               </div>
 
-              {/* E-MAIL */}
+              {/* EMAIL */}
               <div className="flex gap-3">
                 <FaEnvelope
                   aria-hidden="true"
@@ -163,23 +155,18 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* LINHA */}
-        <div
-          aria-hidden="true"
-          className="my-10 h-px w-full bg-white/20"
-        />
+        {/* DIVIDER */}
+        <div aria-hidden="true" className="my-10 h-px w-full bg-white/20" />
 
-        {/* PARTE INFERIOR */}
+        {/* BOTTOM */}
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <p className="text-[12px] text-white/80 sm:text-[13px]">
             © 2026 Kairos. Desenvolvido por Maria Tech. Todos os direitos
             reservados.
           </p>
 
-          {/* LINKS LEGAIS */}
-          <div className="flex flex-wrap gap-6 text-[12px] text-white/80 sm:text-[13px]">
-            {/* Removidos até que as páginas sejam implementadas */}
-          </div>
+          {/* LEGAL LINKS */}
+          <div className="flex flex-wrap gap-6 text-[12px] text-white/80 sm:text-[13px]"></div>
         </div>
       </div>
     </footer>
