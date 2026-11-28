@@ -17,10 +17,10 @@ interface HeaderProps {
 // Links do menu
 const navigation = [
   { label: "Home", href: "/" },
-  { label: "Queimadores", href: "/queimadores" },
-  { label: "Produtos", href: "/produtos" },
-  { label: "Nossa História", href: "/nossahistoria" },
-  { label: "Contato", href: "/contato" },
+  { label: "Queimadores", href: "/burners" },
+  { label: "Produtos", href: "/products" },
+  { label: "Nossa História", href: "/our-story" },
+  { label: "Contato", href: "/contact" },
 ];
 
 export default function Header({ darkText = false }: HeaderProps) {
